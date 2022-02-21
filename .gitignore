@@ -1,6 +1,6 @@
 secret_keys.py
 
-# You need to exclude/include each subdirectory for .gitignore
+# You need to exclude then include each subdirectory for .gitignore
 # https://stackoverflow.com/questions/987142/make-gitignore-ignore-everything-except-a-few-files
 data/*
 !data/Fakeddit

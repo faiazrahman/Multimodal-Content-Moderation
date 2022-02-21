@@ -1,3 +1,4 @@
 secret_keys.py
 data/
-!data/requirements.txt
+!data/Fakeddit/requirements.txt
+!data/MMHS150K/requirements.txt

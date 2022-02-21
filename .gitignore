@@ -1,1 +1,3 @@
 secret_keys
+data/
+!data/requirements.txt

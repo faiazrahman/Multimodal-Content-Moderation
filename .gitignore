@@ -6,6 +6,7 @@ data/*
 !data/Fakeddit
 data/Fakeddit/*
 !data/Fakeddit/requirements.txt
+!data/Fakeddit/image_downloader.py
 
 !data/MMHS150K
 data/MMHS150K/*

@@ -31,7 +31,7 @@ parser.add_argument("data_filename", type=str, default="", help=".tsv file stori
 args = parser.parse_args()
 
 df = None
-if args.data_filename != "":
+if args.data_filename == "":
     # Original from Fakeddit repo
     df = pd.read_csv(args.type, sep="\t")
 else:

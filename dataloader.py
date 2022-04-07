@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.INFO) # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 DATA_PATH = "./data"
 PL_ASSETS_PATH = "./lightning_logs"
-IMAGES_DIR = os.path.join(DATA_PATH, "images")
+IMAGES_DIR = os.path.join(DATA_PATH, "Fakeddit/images")
 IMAGE_EXTENSION = ".jpg"
 
 class Modality(enum.Enum):

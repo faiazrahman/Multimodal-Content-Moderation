@@ -18,9 +18,9 @@ import transformers
 
 logging.basicConfig(level=logging.INFO) # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
-DATA_PATH = "./data"
+DATA_PATH = "./data/Fakeddit"
 PL_ASSETS_PATH = "./lightning_logs"
-IMAGES_DIR = os.path.join(DATA_PATH, "Fakeddit/images")
+IMAGES_DIR = os.path.join(DATA_PATH, "images")
 IMAGE_EXTENSION = ".jpg"
 
 class Modality(enum.Enum):
@@ -40,7 +40,7 @@ class MultimodalDataset(Dataset):
         from_preprocessed_dataframe=None, # Preprocessed dataframe to load from
         from_dialogue_dataframe=None, # Partially preprocessed df to load from
         data_path=None, # Path to data (i.e. not using preprocessed dataframe)
-        dir_to_save_dataframe="data", # Save the preprocessed dataframe here
+        dir_to_save_dataframe="data/Fakeddit", # Save the preprocessed dataframe here
         dataset_type="train",
         modality=None,
         text_embedder=None,
@@ -152,7 +152,7 @@ class MultimodalDataset(Dataset):
         print("Preprocessed dataframe saved to {}".format(save_path))
         logging.info("Preprocessed dataframe saved to {}".format(save_path))
 
-        return
+        return df
 
     def _preprocess_dialogue(self, from_saved_df_path=""):
         pass

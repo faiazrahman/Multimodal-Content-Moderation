@@ -25,8 +25,8 @@ import sys
 
 parser = argparse.ArgumentParser(description='r/Fakeddit image downloader')
 
-parser.add_argument('type', type=str, help='train, validate, or test')
-parser.add_argument("data_filename", type=str, default="", help=".tsv file storing text data; only the images corresponding to those examples will be downloaded")
+parser.add_argument('--type', type=str, default="", help='train, validate, or test')
+parser.add_argument("--data_filename", type=str, default="", help=".tsv file storing text data; only the images corresponding to those examples will be downloaded")
 
 args = parser.parse_args()
 

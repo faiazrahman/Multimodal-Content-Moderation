@@ -1,4 +1,5 @@
-secret_keys.py
+data_augmentation/secret_keys.py
+data_augmentation/__pycache__/*
 
 # You need to exclude then include each subdirectory for .gitignore
 # https://stackoverflow.com/questions/987142/make-gitignore-ignore-everything-except-a-few-files

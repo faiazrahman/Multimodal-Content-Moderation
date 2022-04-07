@@ -12,3 +12,6 @@ data/Fakeddit/*
 !data/MMHS150K
 data/MMHS150K/*
 !data/MMHS150K/requirements.txt
+
+lightning_logs/*
+!lightning_logs/log.log

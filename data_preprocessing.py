@@ -54,6 +54,9 @@ if __name__ == "__main__":
     # else:
     #     image_transform = JointTextImageModel.build_image_transform()
 
+    logging.info("Running data_preprocessing.py...")
+    logging.info("NOTE: Make sure that the images have already been downloaded for the train and test data via data/Fakeddit/image_downloader.py")
+
     if args.train:
         # Calling the MultimodalDataset constructor (i.e. __init__) will run
         # the necessary data preprocessing steps and dump the resulting dataframe
@@ -79,7 +82,7 @@ if __name__ == "__main__":
         # See comment above
         test_dataset = MultimodalDataset(
             from_dialogue_dataframe=args.from_dialogue_dataframe,
-            data_path=args.train_data_path,
+            data_path=args.test_data_path,
             dir_to_save_dataframe=args.dir_to_save_dataframe,
             dataset_type="test",
             modality=args.modality,

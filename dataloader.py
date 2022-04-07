@@ -16,7 +16,7 @@ from torch.utils.data import Dataset, DataLoader
 
 import transformers
 
-logging.basicConfig(level=logging.INFO) # DEBUG, INFO, WARNING, ERROR, CRITICAL
+logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 DATA_PATH = "./data/Fakeddit"
 PL_ASSETS_PATH = "./lightning_logs"
@@ -74,6 +74,7 @@ class MultimodalDataset(Dataset):
 
         df = None
         if not from_preprocessed_dataframe:
+            print("Running data preprocessing from scratch...")
             # This is the first time this data is being setup, so we run full preprocessing
             df = pd.read_csv(data_path, sep='\t', header=0)
             df = self._preprocess_df(df)
@@ -92,6 +93,7 @@ class MultimodalDataset(Dataset):
                 else:
                     self._preprocess_dialogue()
         else: # from_preprocessed_dataframe:
+            print("Running data preprocessing from preprocessed dataframe...")
             df = None
             if isinstance(from_preprocessed_dataframe, pd.DataFrame):
                 df = from_preprocessed_dataframe
@@ -141,6 +143,9 @@ class MultimodalDataset(Dataset):
 
         df['image_exists'] = df.apply(lambda row: image_exists(row), axis=1)
         df = df[df['image_exists'] == True].drop('image_exists', axis=1)
+        if df.empty:
+            print("WARNING: None of the images for this dataset have been downloaded, so the dataframe is empty!")
+            print("Download the images first using data/Fakeddit/image_downloader.py then run data preprocessing again")
         df = df.drop(['created_utc', 'domain', 'hasImage', 'image_url'], axis=1)
         df.reset_index(drop=True, inplace=True)
 

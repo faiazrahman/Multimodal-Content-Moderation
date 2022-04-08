@@ -39,7 +39,7 @@ class MultimodalDataset(Dataset):
     def __init__(
         self,
         from_preprocessed_dataframe=None, # Preprocessed dataframe to load from
-        from_dialogue_dataframe=None, # Dataframe containing only dialogue data
+        from_dialogue_dataframe=None, # Dataframe containing only filtered dialogue data
         data_path=None, # Path to data (i.e. not using preprocessed dataframe)
         dir_to_save_dataframe="data/Fakeddit", # Save the preprocessed dataframe here
         dataset_type="train",

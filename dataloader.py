@@ -39,7 +39,7 @@ class MultimodalDataset(Dataset):
     def __init__(
         self,
         from_preprocessed_dataframe=None, # Preprocessed dataframe to load from
-        from_dialogue_dataframe=None, # Partially preprocessed df to load from
+        from_dialogue_dataframe=None, # Dataframe containing only dialogue data
         data_path=None, # Path to data (i.e. not using preprocessed dataframe)
         dir_to_save_dataframe="data/Fakeddit", # Save the preprocessed dataframe here
         dataset_type="train",
@@ -108,7 +108,7 @@ class MultimodalDataset(Dataset):
                 # If we do that, then we'll run our dialogue preprocessing using that
                 # dataframe (which we load from the .pkl file)
                 if from_dialogue_dataframe:
-                    self._preprocess_dialogue(from_saved_df_path=from_dialogue_dataframe)
+                    self._preprocess_dialogue(from_saved_dialogue_df_path=from_dialogue_dataframe)
                 else:
                     self._preprocess_dialogue()
 
@@ -138,6 +138,20 @@ class MultimodalDataset(Dataset):
         pass
 
     def _preprocess_df(self, df):
+        """
+        Preprocesses dataframe by only keeping multi-modal examples, i.e. those
+        whose images exist
+
+        Note that some posts inherently do not have images, and those are the
+        examples we are removing; however, if you have not downloaded the
+        images for a post, it will also be removed; thus, first run
+        `data/Fakeddit/image_downloader.py` for both the train and test data
+        (specifying the data file path via the `--data_filename` arg)
+
+        Saves the dataframe to `{dataset_type}__{modality}__dataframe.pkl`,
+        e.g. `train__text_image__dataframe.pkl`
+        """
+
         def image_exists(row):
             """ Ensures that image exists and can be opened """
             image_path = os.path.join(IMAGES_DIR, row['id'] + IMAGE_EXTENSION)
@@ -161,7 +175,7 @@ class MultimodalDataset(Dataset):
         df.reset_index(drop=True, inplace=True)
 
         # Save this dataframe into a pickle
-        # Filename will look something like "train__text_image_dialogue__dataframe.pkl"
+        # Filename will look something like "train__text_image__dataframe.pkl"
         filename = "__".join([self.dataset_type, self.saved_dataframe_filename_prefix, "dataframe.pkl"])
         save_path = os.path.join(self.dir_to_save_dataframe, filename)
         df.to_pickle(save_path)
@@ -170,22 +184,30 @@ class MultimodalDataset(Dataset):
 
         return df
 
-    def _preprocess_dialogue(self, from_saved_df_path=""):
+    def _preprocess_dialogue(self, from_saved_dialogue_df_path=""):
         """
         Preprocesses dialogue data by generating dialogue summaries and storing
         them as a column in the main dataframe
 
         A comment's 'submission_id' is linked (i.e. equal) to a post's 'id';
         'body' contains the comment text and 'ups' contains upvotes
+
+        Saves the dialogue dataframe (i.e. containing only dialogue data,
+        filtered to keep the comments with posts in the current main dataset)
+        to {dataset_type}__dialogue_dataframe.pkl`,
+        e.g. `train__dialogue_dataframe.pkl`
+
+        Saves the final main dataframe (i.e. containing text, image, and
+        dialogue data with dialogue summaries) to
+        `{dataset_type}__{modality}__dataframe.pkl`,
+        e.g. `train__text_image_data__dataframe.pkl`
         """
 
-        # Save this dialogue dataframe into a pickle
-        # Filename will look something like "train__text_image_dialogue__dialogue_dataframe.pkl"
-        filename = "__".join([self.dataset_type, self.saved_dataframe_filename_prefix, "dialogue_dataframe.pkl"])
-        save_path = os.path.join(self.dir_to_save_dataframe, filename)
-
-        def generate_summaries_and_save_df(df, save_path="data"):
+        def generate_summaries_and_save_df(df, save_path="data/Fakeddit"):
             """ df: Dataframe made from dialogue data file """
+
+            logging.info("Generating summaries for current dataset...")
+
             # Add new column in main dataframe to hold dialogue summaries
             self.data_frame['comment_summary'] = ""
 
@@ -223,22 +245,29 @@ class MultimodalDataset(Dataset):
                 except:
                     failed_ids.append(text_id)
 
-            # Save final dialogue dataframe
+            # Save final main dataframe
             self.data_frame.to_pickle(save_path)
-            print("Preprocessed dialogue dataframe saved to {}".format(save_path))
-            logging.info("Preprocessed dialogue dataframe saved to {}".format(save_path))
+            print("Preprocessed final dataframe (with dialogue summaries) saved to {}".format(save_path))
+            logging.info("Preprocessed final dataframe (with dialogue summaries) saved to {}".format(save_path))
 
             logging.debug(self.data_frame)
             logging.debug(self.data_frame['comment_summary'])
-            logging.debug("num_failed:", len(failed_ids))
+            logging.debug("num_failed: " + str(len(failed_ids)))
             logging.debug(failed_ids)
+            print("Preprocessed final dataframe (with dialogue summaries) saved to {}".format(save_path))
+            logging.info("Preprocessed final dataframe (with dialogue summaries) saved to {}".format(save_path))
 
             return
 
-        if from_saved_df_path != "":
+        # After preprocessing, we will save this dialogue dataframe into a pickle
+        # Filename will look something like "train__text_image_dialogue__dataframe.pkl"
+        final_df_filename = "__".join([self.dataset_type, self.saved_dataframe_filename_prefix, "dataframe.pkl"])
+        final_df_save_path = os.path.join(self.dir_to_save_dataframe, final_df_filename)
+
+        if from_saved_dialogue_df_path != "":
             # Special Case (see above comment in __init__)
-            df = pd.read_pickle(from_saved_df_path)
-            generate_summaries_and_save_df(df, save_path=save_path)
+            df = pd.read_pickle(from_saved_dialogue_df_path)
+            generate_summaries_and_save_df(df, save_path=final_df_save_path)
         else:
             df = pd.read_csv(DIALOGUE_DATA_FILE, sep='\t')
             logging.debug(df)
@@ -254,6 +283,10 @@ class MultimodalDataset(Dataset):
                 """ If a comment was deleted, its body just contains [deleted] """
                 return row['body'] == "[deleted]"
 
+            # Filter dialogue dataframe to only keep comments with posts in the
+            # current main dataset; note that the dialogue data is huge, so
+            # this will take a while (but we will save it)
+            logging.info("Filtering dialogue dataframe to keep only comments with posts in current dataset...")
             df['text_exists'] = df.apply(lambda row: text_exists(row), axis=1)
             df = df[df['text_exists'] == True].drop('text_exists', axis=1)
             df['comment_deleted'] = df.apply(lambda row: comment_deleted(row), axis=1)
@@ -261,7 +294,16 @@ class MultimodalDataset(Dataset):
             df.reset_index(drop=True, inplace=True)
             logging.debug(df)
 
-            # Save dataframe so far before summary generation
-            df.to_pickle(save_path)
+            # Save dialogue dataframe so far before summary generation
+            # Again: This is a dataframe of ONLY dialogue data, filtered to
+            # keep the comments with posts in the current main dataset
+            # Filename will look something like "train__dialogue_dataframe.pkl"
+            dialogue_df_filename = "__".join([self.dataset_type, "dialogue_dataframe.pkl"])
+            dialogue_df_save_path = os.path.join(self.dir_to_save_dataframe, dialogue_df_filename)
+            df.to_pickle(dialogue_df_save_path)
+            logging.info("Filtered dialogue dataframe saved to {}".format(dialogue_df_save_path))
 
-            generate_summaries_and_save_df(df, save_path=save_path)
+            # Save the final main dataframe (with text, image, and dialogue
+            # data with dialogue summaries); note that its filename is different
+            # Filename will look something like "train__text_image_dialogue__dataframe.pkl"
+            generate_summaries_and_save_df(df, save_path=final_df_save_path)

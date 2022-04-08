@@ -49,6 +49,7 @@ if __name__ == "__main__":
     logging.info(args)
 
     # text_embedder = SentenceTransformer(args.text_embedder)
+    # image_encoder = ... # TODO
     # image_transform = None
     # if Modality(args.modality) == Modality.TEXT_IMAGE_DIALOGUE:
     #     image_transform = JointTextImageDialogueModel.build_image_transform()
@@ -62,8 +63,9 @@ if __name__ == "__main__":
         # Calling the MultimodalDataset constructor (i.e. __init__) will run
         # the necessary data preprocessing steps and dump the resulting dataframe
         # into a serialized .pkl file; the path to that .pkl file can then be
-        # passed as the `processed_dataframe_path` arg in the config for training
-        # and evaluation
+        # passed as the `processed_dataframe_path` arg in the config  (and in
+        # turn, the `from_preprocessed_dataframe` arg in MultimodalDataset) for
+        # training and evaluation
         train_dataset = MultimodalDataset(
             from_dialogue_dataframe=args.from_dialogue_dataframe,
             data_path=args.train_data_path,
@@ -71,6 +73,7 @@ if __name__ == "__main__":
             dataset_type="train",
             modality=args.modality,
             text_embedder=None, # TODO text_embedder,
+            image_encoder=None, # TODO image_encoder,
             image_transform=None, # TODO image_transform,
             summarization_model=args.dialogue_summarization_model,
             images_dir=IMAGES_DIR,
@@ -88,6 +91,7 @@ if __name__ == "__main__":
             dataset_type="test",
             modality=args.modality,
             text_embedder=None, # TODO text_embedder,
+            image_encoder=None, # TODO image_encoder,
             image_transform=None, # TODO image_transform,
             summarization_model=args.dialogue_summarization_model,
             images_dir=IMAGES_DIR,

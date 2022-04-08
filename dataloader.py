@@ -112,7 +112,7 @@ class MultimodalDataset(Dataset):
                 else:
                     self._preprocess_dialogue()
 
-            # TODO: Save final dataframe
+            # TODO: Save final dataframe --- UPDATE: This is done in _preprocess_dialogue()
 
         else: # from_preprocessed_dataframe:
             print("Running data preprocessing from preprocessed dataframe...")

@@ -22,6 +22,63 @@ def _build_image_transform(image_dim=224):
 TEXT_EMBEDDER = SentenceTransformer('all-mpnet-base-v2')
 IMAGE_TRANSFORM = _build_image_transform()
 
+def test_text_dataset():
+    print("Testing MultimodalDataset for text modality...")
+
+    train_dataset = MultimodalDataset(
+        from_preprocessed_dataframe="./data/Fakeddit/train__text_image__dataframe.pkl",
+        modality=Modality.TEXT,
+        text_embedder=TEXT_EMBEDDER,
+        image_transform=IMAGE_TRANSFORM,
+        num_classes=6
+    )
+
+    assert(len(train_dataset) > 0)
+    assert(isinstance(train_dataset[0], dict))
+
+    batch_size = 64
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        num_workers=0
+    )
+
+    for batch in train_loader:
+        text, label = batch["text"], batch["label"]
+        assert(len(list(text[0].shape)) == 1)   # Text is a 1D tensor with 768 values
+        assert(len(list(label[0].shape)) == 0)  # Label is a single integer (i.e. dimension of 0)
+        break
+
+    print("Testing MultimodalDataset for text modality... PASSED")
+
+def test_image_dataset():
+    print("Testing MultimodalDataset for image modality...")
+
+    train_dataset = MultimodalDataset(
+        from_preprocessed_dataframe="./data/Fakeddit/train__text_image__dataframe.pkl",
+        modality=Modality.IMAGE,
+        image_transform=IMAGE_TRANSFORM,
+        num_classes=6
+    )
+
+    assert(len(train_dataset) > 0)
+    assert(isinstance(train_dataset[0], dict))
+
+    batch_size = 64
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        num_workers=0
+    )
+
+    for batch in train_loader:
+        image, label = batch["image"], batch["label"]
+        assert(len(list(image[0].shape)) == 3)  # Image has 3 channels of 224 by 224 pixels
+        assert(len(list(label[0].shape)) == 0)  # Label is a single integer (i.e. dimension of 0)
+        break
+
+    print("Testing MultimodalDataset for image modality... PASSED")
+
 def test_text_image_dataset():
     print("Testing MultimodalDataset for text-image modality...")
 
@@ -84,6 +141,8 @@ def test_text_image_dialogue_dataset():
     print("Testing MultimodalDataset for text-image-dialogue modality... PASSED")
 
 if __name__ == "__main__":
+    test_text_dataset()
+    test_image_dataset()
     test_text_image_dataset()
     test_text_image_dialogue_dataset()
     print("test_dataloader.py: ALL TESTS PASSED")

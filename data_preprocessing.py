@@ -18,7 +18,6 @@ from dataloader import MultimodalDataset, Modality
 from sentence_transformers import SentenceTransformer
 
 DATA_PATH = "./data/Fakeddit"
-IMAGES_DIR = os.path.join(DATA_PATH, "images")
 TRAIN_DATA_SIZE = 10000
 TEST_DATA_SIZE = 1000
 
@@ -48,13 +47,15 @@ if __name__ == "__main__":
     args.dialogue_summarization_model = config.get("dialogue_summarization_model", "facebook/bart-large-cnn")
     logging.info(args)
 
-    # text_embedder = SentenceTransformer(args.text_embedder)
-    # image_encoder = ... # TODO
-    # image_transform = None
-    # if Modality(args.modality) == Modality.TEXT_IMAGE_DIALOGUE:
-    #     image_transform = JointTextImageDialogueModel.build_image_transform()
-    # else:
-    #     image_transform = JointTextImageModel.build_image_transform()
+    # Note that text_embedder, image_transform, and image_encoder do not need
+    # to be passed to the torch.utils.data.Dataset class for data preprocessing,
+    # since they are only used when getting an item from the dataset
+    # Data preprocessing will save the preprocessed data to a dataframe .pkl
+    # which is then quickly loaded when instantiating the same dataset for
+    # training or evaluation
+    # The summarization_model, however, is needed, since data preprocessing
+    # will generate the summaries using that model and save them into the
+    # aforementioned dataframe .pkl
 
     logging.info("Running data_preprocessing.py...")
     logging.info("NOTE: Make sure that the images have already been downloaded for the train and test data via data/Fakeddit/image_downloader.py")
@@ -72,11 +73,10 @@ if __name__ == "__main__":
             dir_to_save_dataframe=args.dir_to_save_dataframe,
             dataset_type="train",
             modality=args.modality,
-            text_embedder=None, # TODO text_embedder,
-            image_encoder=None, # TODO image_encoder,
-            image_transform=None, # TODO image_transform,
+            text_embedder=None,
+            image_transform=None,
+            image_encoder=None,
             summarization_model=args.dialogue_summarization_model,
-            images_dir=IMAGES_DIR,
             num_classes=args.num_classes
         )
         logging.info("Train dataset size: {}".format(len(train_dataset)))
@@ -90,11 +90,10 @@ if __name__ == "__main__":
             dir_to_save_dataframe=args.dir_to_save_dataframe,
             dataset_type="test",
             modality=args.modality,
-            text_embedder=None, # TODO text_embedder,
-            image_encoder=None, # TODO image_encoder,
-            image_transform=None, # TODO image_transform,
+            text_embedder=None,
+            image_transform=None,
+            image_encoder=None,
             summarization_model=args.dialogue_summarization_model,
-            images_dir=IMAGES_DIR,
             num_classes=args.num_classes
         )
         logging.info("Test dataset size: {}".format(len(test_dataset)))

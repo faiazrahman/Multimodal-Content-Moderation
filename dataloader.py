@@ -45,11 +45,10 @@ class MultimodalDataset(Dataset):
         dataset_type="train",
         modality=None,
         text_embedder=None,
-        image_encoder=None,
         image_transform=None,
+        image_encoder=None,
         summarization_model=None,
         num_classes=2,
-        images_dir=IMAGES_DIR
     ):
 
         self.dataset_type = dataset_type
@@ -75,6 +74,7 @@ class MultimodalDataset(Dataset):
 
         self.text_embedder = text_embedder
         self.image_transform = image_transform
+        self.image_encoder = image_encoder
         self.summarization_model = summarization_model
 
         # TODO: Handle in-house summarization model

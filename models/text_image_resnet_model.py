@@ -95,7 +95,24 @@ class TextImageResnetMMFNDModel(pl.LightningModule):
         self.text_feature_dim = self.hparams.get("text_feature_dim", 300)
         self.image_feature_dim = self.hparams.get("image_feature_dim", self.text_feature_dim)
 
-        self.model = self._build_model()
+        text_module = torch.nn.Linear(
+            in_features=self.embedding_dim, out_features=self.text_feature_dim)
+
+        image_module = torchvision.models.resnet152(pretrained=True)
+        # Overwrite last layer to get features (rather than classification)
+        image_module.fc = torch.nn.Linear(
+            in_features=RESNET_OUT_DIM, out_features=self.image_feature_dim)
+
+        self.model = TextImageResnetModel(
+            num_classes=self.hparams.get("num_classes", NUM_CLASSES),
+            loss_fn=torch.nn.CrossEntropyLoss(),
+            text_module=text_module,
+            image_module=image_module,
+            text_feature_dim=self.text_feature_dim,
+            image_feature_dim=self.image_feature_dim,
+            fusion_output_size=self.hparams.get("fusion_output_size", 512),
+            dropout_p=self.hparams.get("dropout_p", DROPOUT_P)
+        )
 
         # When reloading the model for evaluation, we will need the
         # hyperparameters as they are now
@@ -172,23 +189,3 @@ class TextImageResnetMMFNDModel(pl.LightningModule):
         )
         # optimizer = torch.optim.SGD(self.parameters(), lr=LEARNING_RATE, momentum=0.9)
         return optimizer
-
-    def _build_model(self):
-        text_module = torch.nn.Linear(
-            in_features=self.embedding_dim, out_features=self.text_feature_dim)
-
-        image_module = torchvision.models.resnet152(pretrained=True)
-        # Overwrite last layer to get features (rather than classification)
-        image_module.fc = torch.nn.Linear(
-            in_features=RESNET_OUT_DIM, out_features=self.image_feature_dim)
-
-        return TextImageResnetModel(
-            num_classes=self.hparams.get("num_classes", NUM_CLASSES),
-            loss_fn=torch.nn.CrossEntropyLoss(),
-            text_module=text_module,
-            image_module=image_module,
-            text_feature_dim=self.text_feature_dim,
-            image_feature_dim=self.image_feature_dim,
-            fusion_output_size=self.hparams.get("fusion_output_size", 512),
-            dropout_p=self.hparams.get("dropout_p", DROPOUT_P)
-        )

@@ -35,6 +35,19 @@ class Modality(enum.Enum):
     TEXT_IMAGE_DIALOGUE = "text-image-dialogue"
 
 class MultimodalDataset(Dataset):
+    """
+    torch.utils.data.Dataset which supports data for the following modalities:
+    text, image, text-image, text-image-dialogue with BART summarization (or
+    any other model which can be used in HuggingFace transformers.pipeline
+    for summarization)
+
+    Data preprocessing functions are called by __init__(), producing saved
+    dataframe .pkl files which can then be passed in as the
+    `from_preprocessed_dataframe` arg on subsequent uses of the same dataset
+
+    __getitem__() returns a dict containing the appropriate fields present
+    depending on the modality: "id", "text", "image", "dialogue", "label"
+    """
 
     def __init__(
         self,
@@ -77,7 +90,8 @@ class MultimodalDataset(Dataset):
         self.image_encoder = image_encoder
         self.summarization_model = summarization_model
 
-        # TODO: Handle in-house summarization model
+        # NOTE: In-house summarization model will be handled in a separate
+        # torch.utils.data.Dataset class
         self.summarizer = None
         if Modality(modality) == Modality.TEXT_IMAGE_DIALOGUE and summarization_model:
             # Model options: "facebook/bart-large-cnn", "t5-small", "t5-base", "t5-large", "t5-3b", "t5-11b"
@@ -85,7 +99,6 @@ class MultimodalDataset(Dataset):
             self.summarizer = transformers.pipeline("summarization", model=summarization_model)
         elif Modality(modality) == Modality.TEXT_IMAGE_DIALOGUE:
             self.summarizer = transformers.pipeline("summarization")
-
 
         df = None
         if not from_preprocessed_dataframe:
@@ -132,10 +145,68 @@ class MultimodalDataset(Dataset):
         return
 
     def __len__(self):
+        """ Returns the size of the dataset; called as len(dataset) """
         return len(self.data_frame.index)
 
     def __getitem__(self, idx):
-        pass
+        """
+        Returns a dict containing
+            A text embedding Tensor (i.e. the post's main text, embedded)
+            An image RGB Tensor (which is not encoded, allowing for the model
+                to decide how it wants to generate image embeddings, e.g. via
+                ResNet, DINO, etc.)
+            A dialogue summary embedding Tensor (i.e. data preprocessing ran
+                the dialogue summarization model to generate summaries for each
+                post's comments; the dataset embeds that summary)
+
+        For data parallel training, the text embedding step MUST happen in the
+        torch.utils.data.Dataset __getitem__() method; otherwise, any data that
+        is not embedded will not be distributed across the multiple GPUs
+            Note that the image, although not embedded, is not an issue since
+            it is also returned as a Tensor (rather than a string of text, etc.)
+
+        The item returns looks something like the following (with the
+        appropriate fields present depending on the modality)
+            item = {
+                "id": item_id,
+                "text": text,
+                "image": image,
+                "dialogue": dialogue,
+                "label": label
+            }
+        """
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+
+        text, image, dialogue = None, None, None
+        item_id = self.data_frame.loc[idx, 'id']
+
+        label = torch.Tensor(
+            [self.data_frame.loc[idx, self.label]]
+        ).long().squeeze()
+
+        item = {
+            "id": item_id,
+            "label": label
+        }
+
+        if Modality(self.modality) in [Modality.TEXT, Modality.TEXT_IMAGE, \
+                                       Modality.TEXT_IMAGE_DIALOGUE]:
+            text = self.data_frame.loc[idx, 'clean_title']
+            text = self.text_embedder.encode(text, convert_to_tensor=True)
+            item["text"] = text
+        if Modality(self.modality) in [Modality.IMAGE, Modality.TEXT_IMAGE, \
+                                       Modality.TEXT_IMAGE_DIALOGUE]:
+            image_path = os.path.join(IMAGES_DIR, item_id + IMAGE_EXTENSION)
+            image = Image.open(image_path).convert("RGB")
+            image = self.image_transform(image)
+            item["image"] = image
+        if Modality(self.modality) == Modality.TEXT_IMAGE_DIALOGUE:
+            dialogue = self.data_frame.loc[idx, 'comment_summary']
+            dialogue = self.text_embedder.encode(dialogue, convert_to_tensor=True)
+            item["dialogue"] = dialogue
+
+        return item
 
     def _preprocess_df(self, df):
         """

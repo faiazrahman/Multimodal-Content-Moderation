@@ -19,7 +19,9 @@ from models.text_image_resnet_model import TextImageResnetMMFNDModel
 # Multiprocessing for dataset batching
 # NUM_CPUS=40 on Yale Ziva server, NUM_CPUS=24 on Yale Tangra server
 # Set to 0 to turn off multiprocessing
-NUM_CPUS = 40
+# If not specified by --num_cpus command-line arg or in config file, defaults
+# to the following
+DEFAULT_NUM_CPUS = 40
 
 DATA_PATH = "./data/Fakeddit"
 IMAGES_DIR = os.path.join(DATA_PATH, "images")
@@ -54,7 +56,9 @@ if __name__ == "__main__":
     parser.add_argument("--learning_rate", type=float, default=None)
     parser.add_argument("--num_epochs", type=int, default=None)
     parser.add_argument("--dropout_p", type=float, default=None)
+    parser.add_argument("--fusion_output_size", type=int, default=None, help="Dimension after multi-modal embeddings fusion")
     parser.add_argument("--gpus", type=str, help="Comma-separated list of ints with no spaces; e.g. \"0\" or \"0,1\"")
+    parser.add_argument("--num_cpus", type=int, default=None, help="0 for no multi-processing, 24 on Yale Tangra server, 40 on Yale Ziva server")
     parser.add_argument("--text_embedder", type=str, default=None, help="all-mpnet-base-v2 | all-distilroberta-v1")
     parser.add_argument("--image_encoder", type=str, default=None, help="resnet | dino")
     parser.add_argument("--dialogue_summarization_model", type=str, default=None, help="(Does NOT use in-house dialogue summarization) None=Transformers.Pipeline default i.e. sshleifer/distilbart-cnn-12-6 | bart-large-cnn | t5-small | t5-base | t5-large")
@@ -75,10 +79,12 @@ if __name__ == "__main__":
     if not args.learning_rate: args.learning_rate = config.get("learning_rate", 1e-4)
     if not args.num_epochs: args.num_epochs = config.get("num_epochs", 10)
     if not args.dropout_p: args.dropout_p = config.get("dropout_p", 0.1)
+    if not args.fusion_output_size: args.fusion_output_size = config.get("fusion_output_size", 512)
     if args.gpus:
         args.gpus = [int(gpu_num) for gpu_num in args.gpus.split(",")]
     else:
         args.gpus = config.get("gpus", DEFAULT_GPUS)
+    if not args.num_cpus: args.num_cpus = config.get("num_cpus", DEFAULT_NUM_CPUS)
     if not args.text_embedder:
         args.text_embedder = config.get("text_embedder", "all-mpnet-base-v2")
     if not args.image_encoder:
@@ -98,7 +104,9 @@ if __name__ == "__main__":
     print(f"learning_rate: {args.learning_rate}")
     print(f"num_epochs: {args.num_epochs}")
     print(f"dropout_p: {args.dropout_p}")
+    print(f"fusion_output_size: {args.fusion_output_size}")
     print(f"gpus: {args.gpus}")
+    print(f"num_cpus: {args.num_cpus}")
     print(f"text_embedder: {args.text_embedder}")
     print(f"image_encoder: {args.image_encoder}")
     print(f"dialogue_summarization_model: {args.dialogue_summarization_model}")
@@ -108,4 +116,38 @@ if __name__ == "__main__":
     if args.only_check_args:
         quit()
 
-    print("Starting training...")
+    print("\nStarting training...")
+    text_embedder = SentenceTransformer(args.text_embedder)
+    image_transform = None
+    if args.model == "text_image_resnet_model":
+        image_transform = TextImageResnetMMFNDModel.build_image_transform()
+
+    print(text_embedder)
+    print(image_transform)
+
+    train_dataset = MultimodalDataset(
+        from_preprocessed_dataframe=args.preprocessed_train_dataframe_path,
+        data_path=args.train_data_path,
+        modality=args.modality,
+        text_embedder=text_embedder,
+        image_transform=image_transform,
+        summarization_model=args.dialogue_summarization_model,
+        num_classes=args.num_classes
+    )
+    logging.info("Train dataset size: {}".format(len(train_dataset)))
+    logging.info(train_dataset)
+
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=args.batch_size,
+        num_workers=args.num_cpus
+    )
+    logging.info(train_loader)
+
+    hparams = {
+        "embedding_dim": SENTENCE_TRANSFORMER_EMBEDDING_DIM,
+        "num_classes": args.num_classes,
+        "learning_rate": args.learning_rate,
+        "dropout_p": args.dropout_p,
+        "fusion_output_size": args.fusion_output_size
+    }

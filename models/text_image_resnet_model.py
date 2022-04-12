@@ -67,21 +67,6 @@ class TextImageResnetModel(nn.Module):
 
         return (pred, loss)
 
-    @classmethod
-    def build_image_transform(cls, image_dim=224):
-        image_transform = torchvision.transforms.Compose([
-            torchvision.transforms.Resize(size=(image_dim, image_dim)),
-            torchvision.transforms.ToTensor(),
-            # All torchvision models expect the same normalization mean and std
-            # https://pytorch.org/docs/stable/torchvision/models.html
-            torchvision.transforms.Normalize(
-                mean=(0.485, 0.456, 0.406),
-                std=(0.229, 0.224, 0.225)
-            ),
-        ])
-
-        return image_transform
-
 class TextImageResnetMMFNDModel(pl.LightningModule):
 
     def __init__(self, hparams=None):
@@ -189,3 +174,18 @@ class TextImageResnetMMFNDModel(pl.LightningModule):
         )
         # optimizer = torch.optim.SGD(self.parameters(), lr=LEARNING_RATE, momentum=0.9)
         return optimizer
+
+    @classmethod
+    def build_image_transform(cls, image_dim=224):
+        image_transform = torchvision.transforms.Compose([
+            torchvision.transforms.Resize(size=(image_dim, image_dim)),
+            torchvision.transforms.ToTensor(),
+            # All torchvision models expect the same normalization mean and std
+            # https://pytorch.org/docs/stable/torchvision/models.html
+            torchvision.transforms.Normalize(
+                mean=(0.485, 0.456, 0.406),
+                std=(0.229, 0.224, 0.225)
+            ),
+        ])
+
+        return image_transform

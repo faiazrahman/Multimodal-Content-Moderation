@@ -1,6 +1,7 @@
 import os
 import logging
 import argparse
+from typing import Text
 
 from tqdm import tqdm
 import yaml
@@ -9,11 +10,12 @@ import torch
 from torch.utils.data import DataLoader
 
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
 
 from sentence_transformers import SentenceTransformer
 
 from dataloader import MultimodalDataset, Modality
+from models.callbacks import PrintCallback
 from models.text_image_resnet_model import TextImageResnetMMFNDModel
 
 # Multiprocessing for dataset batching
@@ -21,7 +23,8 @@ from models.text_image_resnet_model import TextImageResnetMMFNDModel
 # Set to 0 to turn off multiprocessing
 # If not specified by --num_cpus command-line arg or in config file, defaults
 # to the following
-DEFAULT_NUM_CPUS = 40
+DEFAULT_NUM_CPUS = 0
+# torch.multiprocessing.set_start_method('spawn')
 
 DATA_PATH = "./data/Fakeddit"
 IMAGES_DIR = os.path.join(DATA_PATH, "images")
@@ -30,9 +33,11 @@ TEST_DATA_SIZE = 1000
 SENTENCE_TRANSFORMER_EMBEDDING_DIM = 768
 DEFAULT_GPUS = [0, 1]
 
-logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
+logging.basicConfig(level=logging.INFO) # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 if __name__ == "__main__":
+    torch.multiprocessing.set_start_method('spawn')
+
     parser = argparse.ArgumentParser()
     # TODO rm these first two
     # parser.add_argument("--train", action="store_true", help="Running on training data")
@@ -151,3 +156,54 @@ if __name__ == "__main__":
         "dropout_p": args.dropout_p,
         "fusion_output_size": args.fusion_output_size
     }
+
+    model = None
+    if args.model == "text_image_resnet_model":
+        model = TextImageResnetMMFNDModel(hparams)
+    print(model)
+
+    trainer = None
+
+    latest_checkpoint = ModelCheckpoint(
+        filename="latest-{epoch}-{step}",
+        monitor="step",
+        mode="max",
+        every_n_train_steps=50,
+        save_top_k=2,
+    )
+    final_checkpoint = ModelCheckpoint(
+        filename="final-{epoch}-{step}",
+        monitor="epoch",
+        mode="max",
+        save_top_k=1,
+        save_last=True,
+        save_on_train_epoch_end=True
+    )
+
+    callbacks = [
+        PrintCallback(),
+        TQDMProgressBar(refresh_rate=10),
+        latest_checkpoint,
+        final_checkpoint
+    ]
+
+    if torch.cuda.is_available():
+        # Use all specified GPUs with data parallel strategy
+        # https://pytorch-lightning.readthedocs.io/en/latest/advanced/multi_gpu.html#data-parallel
+        trainer = pl.Trainer(
+            gpus=args.gpus,
+            strategy="dp",
+            callbacks=callbacks,
+            enable_checkpointing=True,
+            max_epochs=args.num_epochs
+        )
+    else:
+        trainer = pl.Trainer(
+            callbacks=callbacks,
+            enable_checkpointing=True,
+            max_epochs=args.num_epochs
+        )
+    logging.info(trainer)
+
+    print(f"Starting training for {args.model} for {args.num_epochs} epochs...")
+    trainer.fit(model, train_loader)

@@ -1,7 +1,7 @@
 model: "text_image_resnet_model" # The exact filename that the model is stored in, excluding the .py extension
 modality: "text-image" # "text" | "image" | "text-image" | "text-image-dialogue"
 num_classes: 6 # 2 | 3 | 6
-batch_size: 32 # (int)
+batch_size: 32 # (int) Increase this as much as you can to maximize GPU utilization without exceeding CUDA memory
 learning_rate: 1.0e-4 # (float) Note that the mantissa must have a decimal point to be parsed by YAML as a float (and not a str)
 num_epochs: 5 # (int)
 dropout_p: 0.1 # (float)

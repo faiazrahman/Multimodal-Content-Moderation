@@ -47,6 +47,7 @@ if __name__ == "__main__":
     #   passed manually as an arg -> specified in given config file -> default
     # This allows experiments defined in config files to be easily replicated
     # while tuning specific parameters via command-line args
+    parser.add_argument("--model", type=str, default=None, help="Model to train; this must exactly match the filename that the model is saved in, excluding the .py extension; e.g. text_image_resnet_model")
     parser.add_argument("--modality", type=str, default=None, help="text | image | text-image | text-image-dialogue")
     parser.add_argument("--num_classes", type=int, default=None, help="2 | 3 | 6")
     parser.add_argument("--batch_size", type=int, default=None)
@@ -67,6 +68,7 @@ if __name__ == "__main__":
             config = yaml.safe_load(yaml_file)
 
     # Defaults specified here, if not specified by command-line arg or config
+    if not args.model: args.model = config.get("model", "text_image_resnet_model")
     if not args.modality: args.modality = config.get("modality", "text-image")
     if not args.num_classes: args.num_classes = config.get("num_classes", 2)
     if not args.batch_size: args.batch_size = config.get("batch_size", 32)
@@ -89,6 +91,7 @@ if __name__ == "__main__":
         args.preprocessed_train_dataframe_path = config.get("preprocessed_train_dataframe_path", None)
 
     print("Running training with the following configuration...")
+    print(f"model: {args.model}")
     print(f"modality: {args.modality}")
     print(f"num_classes: {args.num_classes}")
     print(f"batch_size: {args.batch_size}")

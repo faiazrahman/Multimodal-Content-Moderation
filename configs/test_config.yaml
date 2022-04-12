@@ -1,4 +1,5 @@
 # Used in test_train_script_args_config.py (just to test that configs and command-line arg overriding work properly)
+model: "my_model_name"
 modality: "text-image-dialogue" # "text" | "image" | "text-image" | "text-image-dialogue"
 num_classes: 3 # 2 | 3 | 6
 batch_size: 4 # (int)

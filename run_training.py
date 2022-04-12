@@ -37,6 +37,7 @@ if __name__ == "__main__":
     # parser.add_argument("--test", action="store_true", help="Running on test (evaluation) data")
     parser.add_argument("--in_house_dialogue_summ", action="store_true", help="For training a model using in-house dialogue summarization data")
     parser.add_argument("--argument_graph", action="store_true", help="For training a model using dialogue argument graphs")
+    parser.add_argument("--only_check_args", action="store_true", help="(Only for testing) Stops script after printing out args; doesn't actually run")
     parser.add_argument("--config", type=str, default="", help="config.yaml file with experiment configuration")
 
     # We default all hyperparameters to None so that their default values can
@@ -63,7 +64,7 @@ if __name__ == "__main__":
     config = {}
     if args.config is not "":
         with open(str(args.config), "r") as yaml_file:
-            config = yaml.load(yaml_file)
+            config = yaml.safe_load(yaml_file)
 
     # Defaults specified here, if not specified by command-line arg or config
     if not args.modality: args.modality = config.get("modality", "text-image")
@@ -86,3 +87,22 @@ if __name__ == "__main__":
         args.train_data_path = config.get("train_data_path", os.path.join(DATA_PATH, "multimodal_train_" + str(TRAIN_DATA_SIZE) + ".tsv"))
     if not args.preprocessed_train_dataframe_path:
         args.preprocessed_train_dataframe_path = config.get("preprocessed_train_dataframe_path", None)
+
+    print("Running training with the following configuration...")
+    print(f"modality: {args.modality}")
+    print(f"num_classes: {args.num_classes}")
+    print(f"batch_size: {args.batch_size}")
+    print(f"learning_rate: {args.learning_rate}")
+    print(f"num_epochs: {args.num_epochs}")
+    print(f"dropout_p: {args.dropout_p}")
+    print(f"gpus: {args.gpus}")
+    print(f"text_embedder: {args.text_embedder}")
+    print(f"image_encoder: {args.image_encoder}")
+    print(f"dialogue_summarization_model: {args.dialogue_summarization_model}")
+    print(f"train_data_path: {args.train_data_path}")
+    print(f"preprocessed_train_dataframe_path: {args.preprocessed_train_dataframe_path}")
+
+    if args.only_check_args:
+        quit()
+
+    print("Starting training...")

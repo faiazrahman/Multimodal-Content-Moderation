@@ -2,7 +2,6 @@ import os
 import logging
 import argparse
 from functools import cmp_to_key
-from typing import Text
 
 from tqdm import tqdm
 import yaml

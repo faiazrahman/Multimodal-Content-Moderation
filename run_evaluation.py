@@ -37,7 +37,7 @@ DEFAULT_GPUS = [0, 1]
 
 logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
-def get_checkpoint_filename_from_dir(path):
+def get_checkpoint_filename_from_dir(path: str):
     """
     Gets the final checkpoint for the trained model, in the
     lightning_logs/version_{NUM}/checkpoints/ directory
@@ -51,7 +51,7 @@ def get_checkpoint_filename_from_dir(path):
     otherwise, it won't find the final or latest checkpoint
     """
 
-    def compare_filenames(f1, f2):
+    def compare_filenames(f1: str, f2: str):
         """ Custom comparator for latest checkpoint filenames, sorting ascending """
         epoch1 = int(f1.split("=")[1].split("-")[0])
         epoch2 = int(f2.split("=")[1].split("-")[0])

@@ -36,7 +36,7 @@ DEFAULT_GPUS = [0, 1]
 logging.basicConfig(level=logging.INFO) # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 if __name__ == "__main__":
-    torch.multiprocessing.set_start_method('spawn')
+    # torch.multiprocessing.set_start_method('spawn')
 
     parser = argparse.ArgumentParser()
     # TODO rm these first two
@@ -54,6 +54,9 @@ if __name__ == "__main__":
     #   passed manually as an arg -> specified in given config file -> default
     # This allows experiments defined in config files to be easily replicated
     # while tuning specific parameters via command-line args
+    parser.add_argument("--gpus", type=str, help="Comma-separated list of ints with no spaces; e.g. \"0\" or \"0,1\"")
+    parser.add_argument("--num_cpus", type=int, default=None, help="0 for no multi-processing, 24 on Yale Tangra server, 40 on Yale Ziva server")
+
     parser.add_argument("--model", type=str, default=None, help="Model to train; this must exactly match the filename that the model is saved in, excluding the .py extension; e.g. text_image_resnet_model")
     parser.add_argument("--modality", type=str, default=None, help="text | image | text-image | text-image-dialogue")
     parser.add_argument("--num_classes", type=int, default=None, help="2 | 3 | 6")
@@ -62,8 +65,6 @@ if __name__ == "__main__":
     parser.add_argument("--num_epochs", type=int, default=None)
     parser.add_argument("--dropout_p", type=float, default=None)
     parser.add_argument("--fusion_output_size", type=int, default=None, help="Dimension after multi-modal embeddings fusion")
-    parser.add_argument("--gpus", type=str, help="Comma-separated list of ints with no spaces; e.g. \"0\" or \"0,1\"")
-    parser.add_argument("--num_cpus", type=int, default=None, help="0 for no multi-processing, 24 on Yale Tangra server, 40 on Yale Ziva server")
     parser.add_argument("--text_embedder", type=str, default=None, help="all-mpnet-base-v2 | all-distilroberta-v1")
     parser.add_argument("--image_encoder", type=str, default=None, help="resnet | dino")
     parser.add_argument("--dialogue_summarization_model", type=str, default=None, help="(Does NOT use in-house dialogue summarization) None=Transformers.Pipeline default i.e. sshleifer/distilbart-cnn-12-6 | bart-large-cnn | t5-small | t5-base | t5-large")

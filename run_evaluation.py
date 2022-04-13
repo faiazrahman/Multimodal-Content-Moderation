@@ -206,3 +206,37 @@ if __name__ == "__main__":
     if args.model == "text_image_resnet_model":
         model = TextImageResnetMMFNDModel.load_from_checkpoint(checkpoint_path)
     print(model)
+
+    callbacks = [
+        PrintCallback(),
+        TQDMProgressBar(refresh_rate=10)
+    ]
+
+    trainer = None
+    if torch.cuda.is_available():
+        # Use all specified GPUs with data parallel strategy
+        # https://pytorch-lightning.readthedocs.io/en/latest/advanced/multi_gpu.html#data-parallel
+        trainer = pl.Trainer(
+            gpus=args.gpus,
+            strategy="dp",
+            callbacks=callbacks,
+        )
+    else:
+        trainer = pl.Trainer(
+            callbacks=callbacks
+        )
+    logging.info(trainer)
+
+    trainer.test(model, dataloaders=test_loader)
+    # pl.LightningModule has some issues displaying the results automatically
+    # As a workaround, we can store the result logs as an attribute of the
+    # class instance and display them manually at the end of testing
+    # https://github.com/PyTorchLightning/pytorch-lightning/issues/1088
+    results = model.test_results
+
+    print(args.test_data_path)
+    print(checkpoint_path)
+    print(results)
+    logging.info(args.test_data_path)
+    logging.info(checkpoint_path)
+    logging.info(results)

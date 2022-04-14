@@ -151,6 +151,8 @@ class TextImageResnetDialogueSummarizationMMFNDModel(pl.LightningModule):
             'test_loss': loss,
             'test_acc': torch.tensor(accuracy).cuda()
         }
+        self.log("test_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log("test_acc", torch.tensor(accuracy).cuda(), on_step=True, on_epoch=True, prog_bar=True, logger=True)
         print(loss.item(), output['test_acc'])
         return output
 

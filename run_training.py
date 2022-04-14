@@ -17,6 +17,7 @@ from sentence_transformers import SentenceTransformer
 from dataloader import MultimodalDataset, Modality
 from models.callbacks import PrintCallback
 from models.text_image_resnet_model import TextImageResnetMMFNDModel
+from models.text_image_resnet_dialogue_summarization_model import TextImageResnetDialogueSummarizationMMFNDModel
 
 # Multiprocessing for dataset batching
 # NUM_CPUS=40 on Yale Ziva server, NUM_CPUS=24 on Yale Tangra server
@@ -123,10 +124,27 @@ if __name__ == "__main__":
         quit()
 
     print("\nStarting training...")
+
+    hparams = {
+        "embedding_dim": SENTENCE_TRANSFORMER_EMBEDDING_DIM,
+        "num_classes": args.num_classes,
+        "learning_rate": args.learning_rate,
+        "dropout_p": args.dropout_p,
+        "fusion_output_size": args.fusion_output_size
+    }
+
+    model = None
     text_embedder = SentenceTransformer(args.text_embedder)
     image_transform = None
+
     if args.model == "text_image_resnet_model":
+        model = TextImageResnetMMFNDModel(hparams)
         image_transform = TextImageResnetMMFNDModel.build_image_transform()
+    elif args.model == "text_image_resnet_dialogue_summarization_model":
+        model = TextImageResnetDialogueSummarizationMMFNDModel(hparams)
+        image_transform = TextImageResnetDialogueSummarizationMMFNDModel.build_image_transform()
+    else:
+        raise Exception("run_training.py: Must pass a valid --model name to train")
 
     print(text_embedder)
     print(image_transform)
@@ -150,17 +168,6 @@ if __name__ == "__main__":
     )
     logging.info(train_loader)
 
-    hparams = {
-        "embedding_dim": SENTENCE_TRANSFORMER_EMBEDDING_DIM,
-        "num_classes": args.num_classes,
-        "learning_rate": args.learning_rate,
-        "dropout_p": args.dropout_p,
-        "fusion_output_size": args.fusion_output_size
-    }
-
-    model = None
-    if args.model == "text_image_resnet_model":
-        model = TextImageResnetMMFNDModel(hparams)
     print(model)
 
     trainer = None

@@ -17,6 +17,7 @@ from sentence_transformers import SentenceTransformer
 from dataloader import MultimodalDataset, Modality
 from models.callbacks import PrintCallback
 from models.text_image_resnet_model import TextImageResnetMMFNDModel
+from models.text_image_resnet_dialogue_summarization_model import TextImageResnetDialogueSummarizationMMFNDModel
 
 # Multiprocessing for dataset batching
 # NUM_CPUS=40 on Yale Ziva server, NUM_CPUS=24 on Yale Tangra server
@@ -155,10 +156,37 @@ if __name__ == "__main__":
         quit()
 
     print("\nStarting evaluation...")
+    checkpoint_path = None
+    if args.trained_model_version:
+        assets_version = None
+        if isinstance(args.trained_model_version, int):
+            assets_version = "version_" + str(args.trained_model_version)
+        elif isinstance(args.trained_model_version, str):
+            assets_version = args.trained_model_version
+        else:
+            raise Exception("assets_version must be either an int (i.e. the version number, e.g. 16) or a str (e.g. \"version_16\"")
+        checkpoint_path = os.path.join(PL_ASSETS_PATH, assets_version, "checkpoints")
+    elif args.trained_model_path:
+        checkpoint_path = args.trained_model_path
+    else:
+        raise Exception("A trained model must be specified for evaluation, either by version number (in default PyTorch Lightning assets path ./lightning_logs) or by custom path")
+
+    checkpoint_filename = get_checkpoint_filename_from_dir(checkpoint_path)
+    checkpoint_path = os.path.join(checkpoint_path, checkpoint_filename)
+    logging.info(checkpoint_path)
+
+    model = None
     text_embedder = SentenceTransformer(args.text_embedder)
     image_transform = None
+
     if args.model == "text_image_resnet_model":
+        model = TextImageResnetMMFNDModel.load_from_checkpoint(checkpoint_path)
         image_transform = TextImageResnetMMFNDModel.build_image_transform()
+    elif args.model == "text_image_resnet_dialogue_summarization_model":
+        model = TextImageResnetDialogueSummarizationMMFNDModel.load_from_checkpoint(checkpoint_path)
+        image_transform = TextImageResnetDialogueSummarizationMMFNDModel.build_image_transform()
+    else:
+        raise Exception("run_evaluation.py: Must pass a valid --model name to evaluate")
 
     print(text_embedder)
     print(image_transform)
@@ -182,28 +210,6 @@ if __name__ == "__main__":
     )
     logging.info(test_loader)
 
-    checkpoint_path = None
-    if args.trained_model_version:
-        assets_version = None
-        if isinstance(args.trained_model_version, int):
-            assets_version = "version_" + str(args.trained_model_version)
-        elif isinstance(args.trained_model_version, str):
-            assets_version = args.trained_model_version
-        else:
-            raise Exception("assets_version must be either an int (i.e. the version number, e.g. 16) or a str (e.g. \"version_16\"")
-        checkpoint_path = os.path.join(PL_ASSETS_PATH, assets_version, "checkpoints")
-    elif args.trained_model_path:
-        checkpoint_path = args.trained_model_path
-    else:
-        raise Exception("A trained model must be specified for evaluation, either by version number (in default PyTorch Lightning assets path ./lightning_logs) or by custom path")
-
-    checkpoint_filename = get_checkpoint_filename_from_dir(checkpoint_path)
-    checkpoint_path = os.path.join(checkpoint_path, checkpoint_filename)
-    logging.info(checkpoint_path)
-
-    model = None
-    if args.model == "text_image_resnet_model":
-        model = TextImageResnetMMFNDModel.load_from_checkpoint(checkpoint_path)
     print(model)
 
     callbacks = [

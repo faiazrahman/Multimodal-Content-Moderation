@@ -14,5 +14,5 @@ train_data_path: "./data/Fakeddit/multimodal_train_10000_sampled.tsv" # (str)
 test_data_path: "./data/Fakeddit/multimodal_test_public_1000_sampled.tsv" # (str)
 preprocessed_train_dataframe_path: "./data/Fakeddit/sampled_train__text_image__dataframe.pkl" # (str)
 preprocessed_test_dataframe_path: "./data/Fakeddit/sampled_test__text_image__dataframe.pkl" # (str)
-trained_model_version: 14 # (int)
+trained_model_version: 35 # (int)
 trained_model_path: null # (str) Not needed if you specify trained_model_version and it's in lightning_logs/

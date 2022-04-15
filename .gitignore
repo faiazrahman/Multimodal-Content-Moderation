@@ -15,3 +15,6 @@ data/MMHS150K/*
 
 lightning_logs/*
 !lightning_logs/log.log
+
+logs/*
+!logs/log.log

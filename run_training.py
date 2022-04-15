@@ -126,11 +126,23 @@ if __name__ == "__main__":
     print("\nStarting training...")
 
     hparams = {
+        # Used by pl.LightningModule
         "embedding_dim": SENTENCE_TRANSFORMER_EMBEDDING_DIM,
         "num_classes": args.num_classes,
         "learning_rate": args.learning_rate,
         "dropout_p": args.dropout_p,
-        "fusion_output_size": args.fusion_output_size
+        "fusion_output_size": args.fusion_output_size,
+
+        # For logging
+        "model_name": args.model,
+        "modality": args.modality,
+        "batch_size": args.batch_size,
+        "num_epochs": args.num_epochs,
+        "text_embedder": args.text_embedder,
+        "image_encoder": args.image_encoder,
+        "dialogue_summarization_model": args.dialogue_summarization_model,
+        "train_data_path": args.train_data_path,
+        "preprocessed_train_dataframe_path": args.preprocessed_train_dataframe_path,
     }
 
     model = None

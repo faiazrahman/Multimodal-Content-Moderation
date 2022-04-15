@@ -33,6 +33,7 @@ if __name__ == "__main__":
     parser.add_argument("--test_data_path", type=str, default=None)
     parser.add_argument("--from_dialogue_dataframe", type=str, default=None, help="If you're using dialogue (comment) data and have already filtered the dialogue dataframe, pass the path to its serialized .pkl file to continue preprocessing from that point on")
     parser.add_argument("--dir_to_save_dataframe", type=str, default="data/Fakeddit", help="Path to store saved dataframe .pkl file after data preprocessing")
+    parser.add_argument("--prefix_for_all_generated_pkl_files", type=str, default="", help="Adds a prefix to all generated .pkl files for this run, e.g. sampled_train_...")
     parser.add_argument("--modality", type=str, default=None, help="text | image | text-image | text-image-dialogue")
     parser.add_argument("--dialogue_summarization_model", type=str, default=None)
     parser.add_argument("--config", type=str, default="", help="config.yaml file with experiment configuration")
@@ -75,13 +76,14 @@ if __name__ == "__main__":
             from_dialogue_dataframe=args.from_dialogue_dataframe,
             data_path=args.train_data_path,
             dir_to_save_dataframe=args.dir_to_save_dataframe,
+            prefix_for_all_generated_pkl_files=args.prefix_for_all_generated_pkl_files,
             dataset_type="train",
             modality=args.modality,
             text_embedder=None,
             image_transform=None,
             image_encoder=None,
             summarization_model=args.dialogue_summarization_model,
-            num_classes=args.num_classes
+            # num_classes=args.num_classes
         )
         logging.info("Train dataset size: {}".format(len(train_dataset)))
         logging.info(train_dataset)
@@ -92,13 +94,14 @@ if __name__ == "__main__":
             from_dialogue_dataframe=args.from_dialogue_dataframe,
             data_path=args.test_data_path,
             dir_to_save_dataframe=args.dir_to_save_dataframe,
+            prefix_for_all_generated_pkl_files=args.prefix_for_all_generated_pkl_files,
             dataset_type="test",
             modality=args.modality,
             text_embedder=None,
             image_transform=None,
             image_encoder=None,
             summarization_model=args.dialogue_summarization_model,
-            num_classes=args.num_classes
+            # num_classes=args.num_classes
         )
         logging.info("Test dataset size: {}".format(len(test_dataset)))
         logging.info(test_dataset)

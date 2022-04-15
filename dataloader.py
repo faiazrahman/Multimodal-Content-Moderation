@@ -21,8 +21,8 @@ logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
 DATA_PATH = "./data/Fakeddit"
 PL_ASSETS_PATH = "./lightning_logs"
 IMAGES_DIR = os.path.join(DATA_PATH, "images")
-DIALOGUE_DATA_FILE = os.path.join(DATA_PATH, "all_comments.tsv")
 IMAGE_EXTENSION = ".jpg"
+DIALOGUE_DATA_FILE = os.path.join(DATA_PATH, "all_comments.tsv")
 
 class Modality(enum.Enum):
     """
@@ -55,6 +55,7 @@ class MultimodalDataset(Dataset):
         from_dialogue_dataframe=None, # Dataframe containing only filtered dialogue data
         data_path=None, # Path to data (i.e. not using preprocessed dataframe)
         dir_to_save_dataframe="data/Fakeddit", # Save the preprocessed dataframe here
+        prefix_for_all_generated_pkl_files="", # Adds a prefix to all .pkl files that are saved
         dataset_type="train",
         modality=None,
         text_embedder=None,
@@ -68,6 +69,7 @@ class MultimodalDataset(Dataset):
         self.modality = modality
         self.num_classes = num_classes
         self.dir_to_save_dataframe = dir_to_save_dataframe
+        self.prefix_for_all_generated_pkl_files = prefix_for_all_generated_pkl_files
 
         self.label = "2_way_label"
         if num_classes == 3:
@@ -248,6 +250,9 @@ class MultimodalDataset(Dataset):
         # Save this dataframe into a pickle
         # Filename will look something like "train__text_image__dataframe.pkl"
         filename = "__".join([self.dataset_type, self.saved_dataframe_filename_prefix, "dataframe.pkl"])
+        if self.prefix_for_all_generated_pkl_files != "":
+            # Add prefix if specified, e.g. "sampled_train__{...}.pkl"
+            filename = self.prefix_for_all_generated_pkl_files + "_" + filename
         save_path = os.path.join(self.dir_to_save_dataframe, filename)
         df.to_pickle(save_path)
         print("Preprocessed dataframe saved to {}".format(save_path))
@@ -333,6 +338,8 @@ class MultimodalDataset(Dataset):
         # After preprocessing, we will save this dialogue dataframe into a pickle
         # Filename will look something like "train__text_image_dialogue__dataframe.pkl"
         final_df_filename = "__".join([self.dataset_type, self.saved_dataframe_filename_prefix, "dataframe.pkl"])
+        if self.prefix_for_all_generated_pkl_files != "":
+            final_df_filename = self.prefix_for_all_generated_pkl_files + "_" + final_df_filename
         final_df_save_path = os.path.join(self.dir_to_save_dataframe, final_df_filename)
 
         if from_saved_dialogue_df_path != "":
@@ -370,6 +377,8 @@ class MultimodalDataset(Dataset):
             # keep the comments with posts in the current main dataset
             # Filename will look something like "train__dialogue_dataframe.pkl"
             dialogue_df_filename = "__".join([self.dataset_type, "dialogue_dataframe.pkl"])
+            if self.prefix_for_all_generated_pkl_files != "":
+                dialogue_df_filename = self.prefix_for_all_generated_pkl_files + "_" + dialogue_df_filename
             dialogue_df_save_path = os.path.join(self.dir_to_save_dataframe, dialogue_df_filename)
             df.to_pickle(dialogue_df_save_path)
             logging.info("Filtered dialogue dataframe saved to {}".format(dialogue_df_save_path))

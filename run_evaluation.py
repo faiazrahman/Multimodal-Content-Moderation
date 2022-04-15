@@ -101,6 +101,7 @@ if __name__ == "__main__":
     parser.add_argument("--only_check_args", action="store_true", help="(Only for testing) Stops script after printing out args; doesn't actually run")
     parser.add_argument("--config", type=str, default="", help="config.yaml file with experiment configuration")
 
+    parser.add_argument("--batch_size", type=int, default=None)
     parser.add_argument("--gpus", type=str, help="Comma-separated list of ints with no spaces; e.g. \"0\" or \"0,1\"")
     parser.add_argument("--num_cpus", type=int, default=None, help="0 for no multi-processing, 24 on Yale Tangra server, 40 on Yale Ziva server")
     args = parser.parse_args()
@@ -121,7 +122,7 @@ if __name__ == "__main__":
     args.model = config.get("model", "text_image_resnet_model")
     args.modality = config.get("modality", "text-image")
     args.num_classes = config.get("num_classes", 2)
-    args.batch_size = config.get("batch_size", 32)
+    if not args.batch_size: args.batch_size = config.get("batch_size", 32)
     args.learning_rate = config.get("learning_rate", 1e-4)
     args.num_epochs = config.get("num_epochs", 10)
     args.dropout_p = config.get("dropout_p", 0.1)

@@ -12,4 +12,3 @@ Note that the labels are as follows
     0    Non-argumentative unit
     1    Claim
     2    Premise
- 

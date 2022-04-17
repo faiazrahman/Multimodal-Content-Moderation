@@ -15,7 +15,12 @@ data/MMHS150K/*
 
 !data/AMPERSAND
 data/AMPERSAND/*
-!data/AMPERSAND/readme.txt
+!data/AMPERSAND/README.txt
+
+!data/StabGurevychArgMining
+data/StabGurevychArgMining/*
+!data/StabGurevychArgMining/README.txt
+data/StabGurevychArgMining/annotated_data/*
 
 lightning_logs/*
 !lightning_logs/log.log

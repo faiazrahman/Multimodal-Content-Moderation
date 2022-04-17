@@ -38,4 +38,3 @@ if __name__ == "__main__":
     run("python run_training.py --config configs/text_image_dialogue__2_class__roberta_resnet_bart.yaml")
     run("python run_training.py --config configs/text_image_dialogue__3_class__roberta_resnet_bart.yaml")
     run("python run_training.py --config configs/text_image_dialogue__6_class__roberta_resnet_bart.yaml")
-

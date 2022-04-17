@@ -23,8 +23,7 @@ The first line in the file is the header, which has the following column names (
     label4
     label5
 
-Thus, we will only use 'sentence1', 'sentence2', and 'gold_label`.
-
+Thus, we will only use 'sentence1', 'sentence2', and 'gold_label'.
 
 For reference, here are the first few lines of `multinli_1.0_train.txt`:
 

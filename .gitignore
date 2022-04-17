@@ -26,6 +26,11 @@ data/StabGurevychArgMining/annotated_data/*
 data/ArgumentativeUnitClassification/*
 !data/ArgumentativeUnitClassification/README.txt
 
+!data/MNLI
+data/MNLI/*
+!data/MNLI/download_data.sh
+!data/MNLI/README.txt
+
 lightning_logs/*
 !lightning_logs/log.log
 

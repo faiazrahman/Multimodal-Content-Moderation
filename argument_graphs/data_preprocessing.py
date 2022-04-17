@@ -31,6 +31,8 @@ ALL_AUC_DATA_PATH = os.path.join(AUC_DATA_PATH, ALL_AUC_DATA_FILE)
 ALL_AUC_DATAFRAME_FILE = "auc_dataframe.pkl"
 ALL_AUC_DATAFRAME_PATH = os.path.join(AUC_DATA_PATH, ALL_AUC_DATAFRAME_FILE)
 
+logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
+
 def clean_ampersand_data():
     """
     Cleans the `claimtrain.tsv` and `claimdev.tsv` data in `data/AMPERSAND` to

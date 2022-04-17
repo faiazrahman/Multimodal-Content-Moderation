@@ -22,6 +22,10 @@ data/StabGurevychArgMining/*
 !data/StabGurevychArgMining/README.txt
 data/StabGurevychArgMining/annotated_data/*
 
+!data/ArgumentativeUnitClassification
+data/ArgumentativeUnitClassification/*
+!data/ArgumentativeUnitClassification/README.txt
+
 lightning_logs/*
 !lightning_logs/log.log
 

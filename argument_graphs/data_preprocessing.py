@@ -66,7 +66,9 @@ def clean_and_combine_sgam_data():
 
     Notes about original data format
     - The annotated data is in the `*.ann` files, with one file per original
-      document; note that this is a tab-separated text file (like a .tsv), where the second column is the label and the fifth column is the argumentative unit (i.e. sentence).
+      document; note that this is a tab-separated text file (like a .tsv),
+      where the second column is the label and the fifth column is the
+      argumentative unit (i.e. sentence).
     - Labels are strings, as follows
         Claim
         MajorClaim

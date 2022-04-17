@@ -13,6 +13,10 @@ data/Fakeddit/*
 data/MMHS150K/*
 !data/MMHS150K/requirements.txt
 
+!data/AMPERSAND
+data/AMERSAND/*
+!data/AMPERSAND/readme.txt
+
 lightning_logs/*
 !lightning_logs/log.log
 

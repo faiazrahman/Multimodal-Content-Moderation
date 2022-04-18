@@ -63,6 +63,21 @@ class SequenceClassificationModel(nn.Module):
         return (pred, loss)
 
 class ArgumentativeUnitClassificationModel(pl.LightningModule):
+    """
+    pl.LightningModule for argumentative unit classification; wrapper for
+    SequenceClassificationModel nn.Module (see above)
+
+    This model should be imported and used for inference
+    ```
+      from argument_graphs.models import ArgumentativeUnitClassificationModel
+    ```
+
+    hparams
+        tokenizer: str = "bert-base-uncased"
+        model: str = "bert-base-uncased"
+        num_labels: int = 3
+        learning_rate: float = 1e-4
+    """
 
     def __init__(self, hparams=None):
         super(ArgumentativeUnitClassificationModel, self).__init__()

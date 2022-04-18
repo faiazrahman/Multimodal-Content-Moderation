@@ -1,4 +1,3 @@
-from distutils import text_file
 import sys
 import os
 import glob

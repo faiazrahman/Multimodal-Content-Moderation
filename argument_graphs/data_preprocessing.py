@@ -1,13 +1,12 @@
 from distutils import text_file
 import sys
 import os
+import glob
 import logging
 import argparse
 
-import glob
 import html
 from string import punctuation
-from numpy import NAN
 
 import pandas as pd
 
@@ -96,6 +95,7 @@ def clean_ampersand_data():
         index=False, # Don't write index to .tsv
         columns=['text', 'label']
     )
+    print(f"> Saved to {AMPERSAND_AUC_DATA_PATH}")
 
 def clean_and_combine_sgam_data():
     """
@@ -161,6 +161,7 @@ def clean_and_combine_sgam_data():
         # Append to combined df
         df = df.append(curr_df)
 
+    df = df.reset_index()
     logging.debug(df)
     df.to_csv(
         SGAM_AUC_DATA_PATH,
@@ -168,6 +169,7 @@ def clean_and_combine_sgam_data():
         index=False, # Don't write index to .tsv
         columns=['text', 'label']
     )
+    print(f"> Saved to {SGAM_AUC_DATA_PATH}")
 
 def aggregate_all_auc_data():
     """
@@ -176,7 +178,18 @@ def aggregate_all_auc_data():
 
     Creates `all_auc_data.tsv` in `data/ArgumentativeUnitClassification/`
     """
-    pass
+    print("Aggregating all argumentative unit classification (AUC) data...")
+    ampersand_df = pd.read_csv(AMPERSAND_AUC_DATA_PATH, sep='\t', header=0)
+    sgam_df = pd.read_csv(SGAM_AUC_DATA_PATH, sep='\t', header=0)
+    df = ampersand_df.append(sgam_df).reset_index()
+    logging.debug(df)
+    df.to_csv(
+        ALL_AUC_DATA_PATH,
+        sep='\t',
+        index=False, # Don't write index to .tsv file
+        columns=['text', 'label']
+    )
+    print(f"> Saved to {ALL_AUC_DATA_PATH}")
 
 def save_auc_data_to_dataframe_pkl():
     """
@@ -187,7 +200,10 @@ def save_auc_data_to_dataframe_pkl():
     - This is the final file which will be used by the torch.utils.data.Dataset
       for the argumentative unit classification submodel
     """
-    pass
+    print("Saving AUC data to dataframe .pkl...")
+    df = pd.read_csv(ALL_AUC_DATA_PATH, sep='\t', header=0)
+    df.to_pickle(ALL_AUC_DATAFRAME_PATH)
+    print(f"> Saved to {ALL_AUC_DATAFRAME_PATH}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -202,8 +218,7 @@ if __name__ == "__main__":
 
     # Run data preprocessing for the AMPERSAND and Stab & Gurevych datasets
     if args.argument_unit_classification:
-        # TODO uncomment all
-        # clean_ampersand_data()
+        clean_ampersand_data()
         clean_and_combine_sgam_data()
         aggregate_all_auc_data()
         save_auc_data_to_dataframe_pkl()

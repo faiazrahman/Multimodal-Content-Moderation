@@ -149,12 +149,4 @@ class ArgumentativeUnitClassificationModel(pl.LightningModule):
             self.parameters(),
             lr=self.hparams.get("learning_rate", LEARNING_RATE)
         )
-        # optimizer = torch.optim.SGD(self.parameters(), lr=LEARNING_RATE, momentum=0.9)
         return optimizer
-
-if __name__ == "__main__":
-    model = SequenceClassificationModel()
-    print(model)
-
-    model = ArgumentativeUnitClassificationModel()
-    print(model)

@@ -33,7 +33,8 @@ class SequenceClassificationModel(nn.Module):
 
     Additional Notes
     - The sequence classification model is implemented using Hugging Face
-      Transformers' `AutoTokenizer` and `AutoModelForSequenceClassification`;
+      Transformers' `AutoTokenizer` and `AutoModelForSequenceClassification`
+      (https://huggingface.co/docs/transformers/model_doc/auto);
       thus, the specified tokenizer and model must be in Hugging Face's
       models repository
     - Default model is BERT (https://arxiv.org/abs/1810.04805), specifically

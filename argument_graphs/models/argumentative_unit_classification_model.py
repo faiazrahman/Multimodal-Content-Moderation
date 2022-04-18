@@ -69,7 +69,8 @@ class ArgumentativeUnitClassificationModel(pl.LightningModule):
 
     This model should be imported and used for inference
     ```
-      from argument_graphs.models import ArgumentativeUnitClassificationModel
+    # Run from root ./
+    from argument_graphs.models import ArgumentativeUnitClassificationModel
     ```
 
     hparams

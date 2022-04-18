@@ -1,7 +1,6 @@
 import os
 import logging
 import argparse
-from typing import Text
 
 from tqdm import tqdm
 import yaml

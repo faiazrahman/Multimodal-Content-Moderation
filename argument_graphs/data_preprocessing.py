@@ -1,3 +1,10 @@
+"""
+Run (from root)
+```
+python -m argument_graphs.data_preprocessing [--args]
+```
+"""
+
 import sys
 import os
 import glob
@@ -9,7 +16,7 @@ from string import punctuation
 
 import pandas as pd
 
-DATA_PATH = "../data"
+DATA_PATH = "./data"
 AMPERSAND_DATA_PATH = os.path.join(DATA_PATH, "AMPERSAND")
 SGAM_DATA_PATH = os.path.join(DATA_PATH, "StabGurevychArgMining")
 AUC_DATA_PATH = os.path.join(DATA_PATH, "ArgumentativeUnitClassification")

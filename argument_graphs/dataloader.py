@@ -11,7 +11,7 @@ from torch.utils.data import Dataset, DataLoader
 
 logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
-DATA_PATH = "../data/ArgumentativeUnitClassification"
+DATA_PATH = "./data/ArgumentativeUnitClassification"
 AUC_DATA_FILE = "all_auc_data.tsv"
 AUC_DATA_PATH = os.path.join(DATA_PATH, AUC_DATA_FILE)
 AUC_DATAFRAME_FILE = "auc_dataframe.pkl"
@@ -36,8 +36,7 @@ class ArgumentativeUnitClassificationDataset(Dataset):
         if os.path.exists(from_dataframe_pkl_path):
             df = pd.read_pickle(from_dataframe_pkl_path)
         else:
-            raise Exception("AUC dataframe does not exist\n\
-                             Run argument_graphs/data_preprocessing.py")
+            raise Exception("AUC dataframe does not exist\nRun argument_graphs/data_preprocessing.py")
         self.data_frame = df
 
     def __len__(self):

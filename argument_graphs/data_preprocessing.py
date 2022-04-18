@@ -4,8 +4,10 @@ import os
 import logging
 import argparse
 
+import glob
 import html
 from string import punctuation
+from numpy import NAN
 
 import pandas as pd
 
@@ -81,12 +83,13 @@ def clean_ampersand_data():
         header=None,
         names=['text', 'label']
     )
-    logging.debug(df)
+
     # Clean text and drop rows with empty text strings
     df['text'] = df['text'].apply(lambda text: clean_text(text))
     df['text_is_empty'] = df.apply(lambda row: text_is_empty(row), axis=1)
     df = df[df['text_is_empty'] == False].drop('text_is_empty', axis=1)
 
+    logging.debug(df)
     df.to_csv(
         AMPERSAND_AUC_DATA_PATH,
         sep='\t',
@@ -107,12 +110,14 @@ def clean_and_combine_sgam_data():
     Notes about original data format
     - The annotated data is in the `*.ann` files, with one file per original
       document; note that this is a tab-separated text file (like a .tsv),
-      where the second column is the label and the fifth column is the
+      where the second column is the label and the third column is the
       argumentative unit (i.e. sentence).
     - Labels are strings, as follows
         Claim
         MajorClaim
         Premise
+    - The labels actually have two numbers following them (e.g. "Claim 591 714"),
+      which we strip out
     - Note that the annotated data has other labels, like "Stance", "supports",
       and so on. However, we will only be using the above three labels since
       we are using this data (along with AMPERSAND) to train an argumentative
@@ -122,7 +127,47 @@ def clean_and_combine_sgam_data():
       AMPERSAND data. (Note that the AMPERSAND data also has the label 0 for
       non-argumentative units.)
     """
-    pass
+
+    def convert_label(label):
+        if label.startswith("Claim") or label.startswith("MajorClaim"):
+            return 1
+        elif label.startswith("Premise"):
+            return 2
+        else:
+            return -1
+
+    print("Cleaning Stab & Gurevych data...")
+    df = pd.DataFrame(columns=['text', 'label'])
+
+    # Iterate over all .ann files in the SGAM data directory
+    for file in glob.glob(os.path.join(SGAM_ORIGINAL_DATA_DIR, "*.ann")):
+        curr_df = pd.read_csv(
+            file,
+            sep='\t',
+            names=['id', 'label', 'text'],
+            usecols=['text', 'label']
+        )
+
+        # Drop rows with NaN text
+        curr_df = curr_df.dropna()
+
+        # Convert labels and drop any invalid labels (i.e. neither claim nor premise)
+        curr_df['label'] = curr_df['label'].apply(lambda label: convert_label(label))
+        curr_df = curr_df[curr_df['label'] != -1]
+
+        # Reorder columns (text then label) to match AMPERSAND
+        curr_df = curr_df[['text', 'label']]
+
+        # Append to combined df
+        df = df.append(curr_df)
+
+    logging.debug(df)
+    df.to_csv(
+        SGAM_AUC_DATA_PATH,
+        sep='\t',
+        index=False, # Don't write index to .tsv
+        columns=['text', 'label']
+    )
 
 def aggregate_all_auc_data():
     """
@@ -157,7 +202,8 @@ if __name__ == "__main__":
 
     # Run data preprocessing for the AMPERSAND and Stab & Gurevych datasets
     if args.argument_unit_classification:
-        clean_ampersand_data()
+        # TODO uncomment all
+        # clean_ampersand_data()
         clean_and_combine_sgam_data()
         aggregate_all_auc_data()
         save_auc_data_to_dataframe_pkl()

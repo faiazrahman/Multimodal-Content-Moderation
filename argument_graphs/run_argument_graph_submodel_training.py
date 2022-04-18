@@ -100,6 +100,7 @@ if __name__ == "__main__":
         # For logging (in `lighting_logs/version_*/hparams.yaml`)
         "batch_size": args.batch_size,
         "num_epochs": args.num_epochs,
+        "experiment_name": "ArgumentativeUnitClassificationModel",
     }
 
     model = ArgumentativeUnitClassificationModel(hparams)

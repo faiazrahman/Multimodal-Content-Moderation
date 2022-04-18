@@ -1,7 +1,13 @@
+from distutils import text_file
 import sys
 import os
 import logging
 import argparse
+
+import html
+from string import punctuation
+
+import pandas as pd
 
 DATA_PATH = "../data"
 AMPERSAND_DATA_PATH = os.path.join(DATA_PATH, "AMPERSAND")
@@ -52,9 +58,41 @@ def clean_ampersand_data():
         0   Non-argumentative unit
         1   Claim
         2   Premise
-    - The created `ampersand_auc_data.tsv` has these same labels
+    - The created `ampersand_auc_data.tsv` has these same labels (and a header
+      of "text\tlabel")
     """
-    pass
+
+    def clean_text(text):
+        """
+        Replace HTML special characters
+        Remove leading and trailing punctuation and whitespace
+        """
+        text = html.unescape(text)
+        return text.strip(punctuation).strip()
+
+    def text_is_empty(row):
+        """ Checks if a row's text is an empty string """
+        return row['text'] == ""
+
+    print("Cleaning AMPERSAND data...")
+    df = pd.read_csv(
+        AMPERSAND_ORIGINAL_TRAIN_DATA_PATH,
+        sep='\t',
+        header=None,
+        names=['text', 'label']
+    )
+    logging.debug(df)
+    # Clean text and drop rows with empty text strings
+    df['text'] = df['text'].apply(lambda text: clean_text(text))
+    df['text_is_empty'] = df.apply(lambda row: text_is_empty(row), axis=1)
+    df = df[df['text_is_empty'] == False].drop('text_is_empty', axis=1)
+
+    df.to_csv(
+        AMPERSAND_AUC_DATA_PATH,
+        sep='\t',
+        index=False, # Don't write index to .tsv
+        columns=['text', 'label']
+    )
 
 def clean_and_combine_sgam_data():
     """

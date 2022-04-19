@@ -140,3 +140,74 @@ if __name__ == "__main__":
     checkpoint_filename = get_checkpoint_filename_from_dir(checkpoint_path)
     checkpoint_path = os.path.join(checkpoint_path, checkpoint_filename)
     logging.info(checkpoint_path)
+
+    model = None
+    if args.argumentative_unit_classification:
+        model = ArgumentativeUnitClassificationModel.load_from_checkpoint(checkpoint_path)
+    logging.info(model)
+
+    full_dataset = None
+    if args.argumentative_unit_classification:
+        full_dataset = ArgumentativeUnitClassificationDataset(tokenizer=args.tokenizer)
+    logging.info("Total dataset size: {}".format(len(full_dataset)))
+    logging.info(full_dataset)
+
+    # Split into train dataset and test dataset
+    train_size = int(0.8 * len(full_dataset))
+    test_size = len(full_dataset) - train_size
+    # NOTE: You must use the same exact seed for torch.Generate() for both the
+    # training and evaluation of a model to ensure that the two datasets have
+    # no overlapping examples; otherwise, evaluation will not be truly
+    # representative of model performance
+    # https://pytorch.org/docs/stable/data.html#torch.utils.data.random_split
+    train_dataset, test_dataset = torch.utils.data.random_split(
+        full_dataset, [train_size, test_size],
+        generator=torch.Generator().manual_seed(6)
+    )
+    logging.info(f"Test dataset size: {len(test_dataset)}")
+
+    test_loader = DataLoader(
+        test_dataset,
+        batch_size=args.batch_size,
+        num_workers=args.num_cpus,
+        drop_last=True
+    )
+    logging.info(test_loader)
+
+    callbacks = [
+        PrintCallback(),
+        TQDMProgressBar(refresh_rate=10)
+    ]
+
+    if torch.cuda.is_available() and len(args.gpus) > 1:
+        # Use all specified GPUs with data parallel strategy
+        # https://pytorch-lightning.readthedocs.io/en/latest/advanced/multi_gpu.html#data-parallel
+        trainer = pl.Trainer(
+            gpus=args.gpus,
+            strategy="dp",
+            callbacks=callbacks,
+        )
+    elif torch.cuda.is_available():
+        # Single GPU training (i.e. data parallel is not specified to Trainer)
+        trainer = pl.Trainer(
+            gpus=args.gpus,
+            callbacks=callbacks,
+        )
+    else:
+        trainer = pl.Trainer(
+            callbacks=callbacks,
+        )
+
+    trainer.test(model, dataloaders=test_loader)
+    # pl.LightningModule has some issues displaying the results automatically
+    # As a workaround, we can store the result logs as an attribute of the
+    # class instance and display them manually at the end of testing
+    # https://github.com/PyTorchLightning/pytorch-lightning/issues/1088
+    results = model.test_results
+
+    print(args.test_data_path)
+    print(checkpoint_path)
+    print(results)
+    logging.info(args.test_data_path)
+    logging.info(checkpoint_path)
+    logging.info(results)

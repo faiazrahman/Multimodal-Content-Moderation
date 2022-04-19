@@ -15,7 +15,7 @@ python -m argument_graphs.run_argument_graph_submodel_training --relationship_ty
 ```
 
 Yale-specific notes
-- Running on single-GPU on Ziva (NVIDIA GeForce RTX 1080) with batch_size 16
+- Running on single-GPU on Ziva (NVIDIA GeForce RTX 3090) with batch_size 16
   has 96-99% GPU utilization
 ```
 (mmcm) fsr3@ziva:~/CS490/Multimodal-Content-Moderation$

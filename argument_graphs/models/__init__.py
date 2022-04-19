@@ -1,1 +1,2 @@
 from .argumentative_unit_classification_model import ArgumentativeUnitClassificationModel
+from .relationship_type_classification_model import RelationshipTypeClassificationModel

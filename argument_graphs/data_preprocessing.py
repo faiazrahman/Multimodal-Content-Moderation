@@ -214,6 +214,7 @@ def aggregate_all_auc_data():
     ampersand_df = pd.read_csv(AMPERSAND_AUC_DATA_PATH, sep='\t', header=0)
     sgam_df = pd.read_csv(SGAM_AUC_DATA_PATH, sep='\t', header=0)
     df = ampersand_df.append(sgam_df).reset_index()
+    df = df.dropna()
     logging.debug(df)
     df.to_csv(
         ALL_AUC_DATA_PATH,
@@ -278,11 +279,12 @@ def clean_mnli_data():
     })
     df = df[['text1', 'text2', 'label']]
 
-    # Drop rows with empty sentences or invalid labels
+    # Drop rows with empty sentences, invalid labels, or NaN
     df['has_empty_sentence'] = df.apply(lambda row: has_empty_sentence(row), axis=1)
     df = df[df['has_empty_sentence'] == False].drop('has_empty_sentence', axis=1)
     df['label'] = df['label'].apply(lambda label: convert_label(label))
     df = df[df['label'] != -1]
+    df = df.dropna()
 
     logging.debug(df)
     df.to_csv(
@@ -304,6 +306,7 @@ def aggregate_all_rtc_data():
     print("Aggregating all relationship type classification (RTC) data...")
     mnli_df = pd.read_csv(MNLI_RTC_DATA_PATH, sep='\t', header=0)
     df = mnli_df # .append(...).reset_index()
+    df = df.dropna()
     logging.debug(df)
     df.to_csv(
         ALL_RTC_DATA_PATH,

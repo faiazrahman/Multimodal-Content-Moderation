@@ -15,11 +15,12 @@ logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-DATA_PATH = "./data/ArgumentativeUnitClassification"
-AUC_DATA_FILE = "all_auc_data.tsv"
-AUC_DATA_PATH = os.path.join(DATA_PATH, AUC_DATA_FILE)
+DATA_PATH = "./data"
 AUC_DATAFRAME_FILE = "auc_dataframe.pkl"
-AUC_DATAFRAME_PATH = os.path.join(DATA_PATH, AUC_DATAFRAME_FILE)
+AUC_DATAFRAME_PATH = os.path.join(DATA_PATH, "ArgumentativeUnitClassification", AUC_DATAFRAME_FILE)
+RTC_DATAFRAME_FILE = "rtc_dataframe.pkl"
+RTC_DATAFRAME_PATH = os.path.join(DATA_PATH, "RelationshipTypeClassification", RTC_DATAFRAME_FILE)
+
 class ArgumentativeUnitClassificationDataset(Dataset):
     """
     torch.utils.data.Dataset for AUC data of the format (text, label), where
@@ -58,7 +59,9 @@ class ArgumentativeUnitClassificationDataset(Dataset):
         # truncation computed over the entire dataset)
         self.encoded_texts = [
             self.tokenizer(
-                text, padding="max_length", max_length=512, truncation=True, return_tensors="pt"
+                text,
+                padding="max_length", max_length=512, truncation=True,
+                return_tensors="pt"
             ) for text in self.data_frame['text']
         ]
 
@@ -101,14 +104,105 @@ class ArgumentativeUnitClassificationDataset(Dataset):
         }
         return item
 
+class RelationshipTypeClassificationDataset(Dataset):
+    """
+    torch.utils.data.Dataset for RTC data of the format (text1, text2, label),
+    where the labels are as follows:
+        0   Neutral
+        1   Entailment
+        2   Contradiction
+
+    `__getitem__()` returns a dict containing ???
+        TODO: Figure out how to pass both texts into the model (separate by
+        [CLS] text1 [SEP] text2 [SEP], add segment_ids etc.)
+    """
+
+    def __init__(
+        self,
+        from_dataframe_pkl_path: str = RTC_DATAFRAME_PATH,
+        tokenizer: str = "bert-base-uncased",
+    ):
+        df = None
+        if os.path.exists(from_dataframe_pkl_path):
+            df = pd.read_pickle(from_dataframe_pkl_path)
+        else:
+            raise Exception("RTC dataframe does not exist\nRun argument_graphs/data_preprocessing.py")
+        self.data_frame = df.dropna()
+
+        self.tokenizer = None
+        try:
+            self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
+        except:
+            raise Exception("Invalid model name passed to transformers.AutoTokenizer")
+
+        # TODO: Run tokenization for all text during dataset initialization
+        # for text1, text2 in zip(self.data_frame['text1'], self.data_frame['text2']):
+        #     # print(text1)
+        #     # print(text2)
+        #     # print(type(text1))
+        #     # print(type(text2))
+        #     if not isinstance(text1, str):
+        #         print(text1)
+        #     if not isinstance(text2, str):
+        #         print(text2)
+        #     inputs = self.tokenizer(
+        #         text1, text2,
+        #         padding="max_length", max_length=512, truncation=True,
+        #         return_tensors="pt"
+        #     )
+        #     # print(inputs)
+
+        self.encoded_texts = [
+            # We pass the pair of sentences to the tokenizer as the first and
+            # second arguments; it will then produce
+            # `[CLS] text1 [SEP] text2 [PAD] ...` and properly set the
+            # `token_type_ids` (0 for text1, 1 for text2, then 0 again for the
+            # remaining padding)
+            # https://discuss.huggingface.co/t/use-two-sentences-as-inputs-for-sentence-classification/5444/4
+            self.tokenizer(
+                text1, text2,
+                padding="max_length", max_length=512, truncation=True,
+                return_tensors="pt"
+            ) for text1, text2 in zip(self.data_frame['text1'], self.data_frame['text2'])
+        ]
+
+    def __len__(self):
+        """ Returns the size of the dataset; called as len(dataset) """
+        return len(self.data_frame.index)
+
+    def __getitem__(self, idx: int):
+
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+
+        print(self.encoded_texts[idx])
+
 if __name__ == "__main__":
     print("WARNING: This is only for testing argument_graphs/dataloader.py")
     print("\t This file should otherwise not be run directly")
+    print("\t Run from root as")
+    print("\t```")
+    print("\t\tpython -m argument_graphs.dataloader")
+    print("\t```")
 
-    dataset = ArgumentativeUnitClassificationDataset()
+    # dataset = ArgumentativeUnitClassificationDataset()
+    # print(type(dataset))
+    # print(f"Dataset size: {len(dataset)}\n")
+    # for idx, item in enumerate(dataset):
+    #     text, label = item['text'], item['label']
+    #     print(text); print(label); print("")
+    #     if idx > 10: break
+
+    # tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+    # input = tokenizer('this is the first sentence', 'another sentence')
+    # print(input)
+    # assert(1==2)
+
+    dataset = RelationshipTypeClassificationDataset()
     print(type(dataset))
     print(f"Dataset size: {len(dataset)}\n")
     for idx, item in enumerate(dataset):
-        text, label = item['text'], item['label']
-        print(text); print(label); print("")
-        if idx > 10: break
+        pass
+        # text, label = item['text'], item['label']
+        # print(text); print(label); print("")
+        # if idx > 10: break

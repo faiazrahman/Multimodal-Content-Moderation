@@ -56,7 +56,7 @@ class SequenceClassificationModel(nn.Module):
         # self.tokenizer = AutoTokenizer.from_pretrained(tokenizer, model_max_length=512)
         self.model = AutoModelForSequenceClassification.from_pretrained(model, num_labels=num_labels)
 
-    def forward(self, encoded_text, label):
+    def forward(self, encoded_text, label=None):
         output = self.model(**encoded_text, labels=label)
         logits, loss = output.logits, output.loss
         pred = torch.argmax(logits, dim=1)
@@ -69,9 +69,40 @@ class ArgumentativeUnitClassificationModel(pl.LightningModule):
 
     This model should be imported and used for inference
     ```
-    # Run from root ./
+    # Scripts which use this model should be run from root ./
+    # Import this model in those scripts as follows
     from argument_graphs.models import ArgumentativeUnitClassificationModel
     ```
+
+    Calling the model for inference
+    - This model expects as input the encoded text, i.e. the output of
+      `transformers.AutoTokenizer()` (which itself is a dict of `input_ids`,
+      `token_type_ids`, and `attention_mask` tensors)
+    - Thus, when running inference on this model, first tokenize the input
+      using `transformers.AutoTokenizer()`, then run it through the model to
+      get the prediction
+    - Since this is a `pl.LightningModule`, this in turn inherits
+      `torch.nn.Module`, which implements `__call__()`, which allows you to
+      run inference as follows
+    ```
+        text = [ "...", "...", "..." ]  # List[str]
+        tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+        model = ArgumentativeUnitClassificationModel()
+        encoded_inputs = tokenizer(
+            text,
+            padding="max_length",
+            max_length=512,
+            truncation=True,
+            return_tensors="pt"
+        )
+        pred = model(encoded_inputs)[0]
+    ```
+    - Note that the model returns a tuple `(pred, loss)` --- for inference, we
+      only need the prediction, so you can unpack it simply via
+      `model(encoded_inputs)[0]`
+    - Also note that the pred is a tensor of ints (where each int is a label
+      0: non-argumentative unit, 1: claim, 2: premise); this tensor can be
+      moved onto CPU by casting it to a list via `pred = pred.tolist()`
 
     hparams
         tokenizer: str = "bert-base-uncased"
@@ -101,7 +132,7 @@ class ArgumentativeUnitClassificationModel(pl.LightningModule):
         self.save_hyperparameters()
 
     # Required for pl.LightningModule
-    def forward(self, text, label):
+    def forward(self, text, label=None):
         return self.model(text, label)
 
     # Required for pl.LightningModule

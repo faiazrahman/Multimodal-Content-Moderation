@@ -294,7 +294,24 @@ def clean_mnli_data():
     print(f"> Saved to {MNLI_RTC_DATA_PATH}")
 
 def aggregate_all_rtc_data():
-    pass
+    """
+    Combines all data for relationship type classification (i.e. entailment);
+    this is only MNLI, but if future work augments the data (with additional
+    datasets, etc.), those would be combined into this file as well
+
+    Creates `all_rtc_data.tsv` in `data/RelationshipTypeClassification/`
+    """
+    print("Aggregating all relationship type classification (RTC) data...")
+    mnli_df = pd.read_csv(MNLI_RTC_DATA_PATH, sep='\t', header=0)
+    df = mnli_df # .append(...).reset_index()
+    logging.debug(df)
+    df.to_csv(
+        ALL_RTC_DATA_PATH,
+        sep='\t',
+        index=False, # Don't write index to .tsv file
+        columns=['text1', 'text2', 'label']
+    )
+    print(f"> Saved to {ALL_RTC_DATA_PATH}")
 
 def save_rtc_data_to_dataframe_pkl():
     """
@@ -305,7 +322,10 @@ def save_rtc_data_to_dataframe_pkl():
     - This is the final file which will be used by the torch.utils.data.Dataset
       for the relationship type classification submodel
     """
-    pass
+    print("Saving RTC data to dataframe .pkl...")
+    df = pd.read_csv(ALL_RTC_DATA_PATH, sep='\t', header=0)
+    df.to_pickle(ALL_RTC_DATAFRAME_PATH)
+    print(f"> Saved to {ALL_RTC_DATAFRAME_PATH}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

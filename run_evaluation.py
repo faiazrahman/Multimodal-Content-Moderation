@@ -18,6 +18,7 @@ from dataloader import MultimodalDataset, Modality
 from models.callbacks import PrintCallback
 from models.text_image_resnet_model import TextImageResnetMMFNDModel
 from models.text_image_resnet_dialogue_summarization_model import TextImageResnetDialogueSummarizationMMFNDModel
+from utils import get_checkpoint_filename_from_dir
 
 # Multiprocessing for dataset batching
 # NUM_CPUS=40 on Yale Ziva server, NUM_CPUS=24 on Yale Tangra server
@@ -36,61 +37,6 @@ SENTENCE_TRANSFORMER_EMBEDDING_DIM = 768
 DEFAULT_GPUS = [0, 1]
 
 logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
-
-def get_checkpoint_filename_from_dir(path: str):
-    """
-    Gets the final checkpoint for the trained model, in the
-    lightning_logs/version_{NUM}/checkpoints/ directory
-
-    Final checkpoints are saved as `final-epoch={...}-step={...}.ckpt`
-    In case that the final checkpoint was not saved (i.e. training was stopped
-    early), we use the latest checkpoint with the largest epoch and step value
-    i.e. `latest-epoch={...}-step={...}.ckpt`
-
-    Note that this only works if checkpoints are saved in the formatting given;
-    otherwise, it won't find the final or latest checkpoint
-    """
-
-    def compare_filenames(f1: str, f2: str):
-        """ Custom comparator for latest checkpoint filenames, sorting ascending """
-        epoch1 = int(f1.split("=")[1].split("-")[0])
-        epoch2 = int(f2.split("=")[1].split("-")[0])
-        if epoch1 < epoch2:
-            return -1 # f1 comes before f2
-        elif epoch1 > epoch2:
-            return 1  # f1 comes after f2
-
-        step1 = int(f1.split("=")[2].split(".")[0])
-        step2 = int(f2.split("=")[2].split(".")[0])
-        if step1 < step2:
-            return -1 # f1 comes before f2
-        elif step1 > step2:
-            return 1  # f1 comes after f2
-        else:
-            return 0
-
-    all_files = os.listdir(path)
-    final_checkpoints = [filename for filename in all_files if filename.startswith("final")]
-    if len(final_checkpoints) > 0:
-        if len(final_checkpoints) == 1:
-            return final_checkpoints[0]
-        else:
-            return sorted(
-                final_checkpoints,
-                key=cmp_to_key(compare_filenames),
-                reverse=True
-            )[0]
-
-    # No final checkpoint, so use latest
-    latest_checkpoints = [filename for filename in all_files if filename.startswith("latest")]
-    if len(latest_checkpoints) > 0:
-        return sorted(
-            latest_checkpoints,
-            key=cmp_to_key(compare_filenames),
-            reverse=True
-        )[0]
-
-    return os.listdir(path)[0]
 
 if __name__ == "__main__":
     # torch.multiprocessing.set_start_method('spawn')

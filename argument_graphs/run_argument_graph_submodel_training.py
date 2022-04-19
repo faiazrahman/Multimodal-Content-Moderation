@@ -18,7 +18,7 @@ Yale-specific notes
 - Running on single-GPU on Ziva (NVIDIA GeForce RTX 3090) with batch_size 16
   has 96-99% GPU utilization
 ```
-(mmcm) fsr3@ziva:~/CS490/Multimodal-Content-Moderation$
+(mmcm) faiaz@ziva:~/CS490/Multimodal-Content-Moderation$
 python -m argument_graphs.run_argument_graph_submodel_training --argumentative_unit_classification --batch_size 16 --gpus 3
 ```
 """
@@ -57,7 +57,8 @@ print(device)
 if __name__ == "__main__":
     # torch.multiprocessing.set_start_method('spawn')
     parser = argparse.ArgumentParser()
-    # Only (and only one) of these must be specified as a command-line argument
+
+    # Only (and only one) of these MUST be specified as a command-line argument
     parser.add_argument("--argumentative_unit_classification", action="store_true", help="Runs training for the argumentative unit classification (AUC) model")
     parser.add_argument("--relationship_type_classification", action="store_true", help="Runs training for the relationship type classification (entailment) model")
 
@@ -217,7 +218,7 @@ if __name__ == "__main__":
             max_epochs=args.num_epochs
         )
     elif torch.cuda.is_available():
-        # Single GPU training
+        # Single GPU training (i.e. data parallel is not specified to Trainer)
         trainer = pl.Trainer(
             gpus=args.gpus,
             callbacks=callbacks,

@@ -25,6 +25,11 @@ The first line in the file is the header, which has the following column names (
 
 Thus, we will only use 'sentence1', 'sentence2', and 'gold_label'.
 
+The labels (strings) are as follows:
+    neutral
+    entailment
+    contradiction
+
 For reference, here are the first few lines of `multinli_1.0_train.txt`:
 
 gold_label      sentence1_binary_parse  sentence2_binary_parse  sentence1_parse sentence2_parse sentence1       sentence2       promptID        pairID  genre   label1  label2  label3  label4  label5

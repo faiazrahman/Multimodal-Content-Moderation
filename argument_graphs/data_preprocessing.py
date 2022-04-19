@@ -3,6 +3,13 @@ Run (from root)
 ```
 python -m argument_graphs.data_preprocessing [--args]
 ```
+- This defaults to run data preprocessing for both AUC data (AMPERSAND, Stab
+  & Gurevych) and RTC data (MNLI entailment); you can run one at a time, if
+  desired
+```
+python -m argument_graphs.data_preprocessing --argumentative_unit_classification
+python -m argument_graphs.data_preprocessing --relationship_type_classification
+```
 """
 
 import sys
@@ -20,6 +27,8 @@ DATA_PATH = "./data"
 AMPERSAND_DATA_PATH = os.path.join(DATA_PATH, "AMPERSAND")
 SGAM_DATA_PATH = os.path.join(DATA_PATH, "StabGurevychArgMining")
 AUC_DATA_PATH = os.path.join(DATA_PATH, "ArgumentativeUnitClassification")
+MNLI_DATA_PATH = os.path.join(DATA_PATH, "MNLI")
+RTC_DATA_PATH = os.path.join(DATA_PATH, "RelationshipTypeClassification")
 
 # Original data files for AMPERSAND
 AMPERSAND_ORIGINAL_TRAIN_DATA_PATH = os.path.join(AMPERSAND_DATA_PATH, "claimtrain.tsv")
@@ -43,6 +52,23 @@ ALL_AUC_DATA_FILE = "all_auc_data.tsv"
 ALL_AUC_DATA_PATH = os.path.join(AUC_DATA_PATH, ALL_AUC_DATA_FILE)
 ALL_AUC_DATAFRAME_FILE = "auc_dataframe.pkl"
 ALL_AUC_DATAFRAME_PATH = os.path.join(AUC_DATA_PATH, ALL_AUC_DATAFRAME_FILE)
+
+# Original data files for MNLI (in subfolder `data/MNLI/multinli_1.0`)
+MNLI_ORIGINAL_TRAIN_DATA_PATH = os.path.join(MNLI_DATA_PATH, "multinli_1.0", "multinli_1.0_train.txt")
+
+# MNLI data after `clean_mnli_data()`
+MNLI_RTC_DATA_FILE = "mnli_rtc_data.tsv" # ['text1', 'text2', 'label']
+MNLI_RTC_DATA_PATH = os.path.join(MNLI_DATA_PATH, MNLI_RTC_DATA_FILE)
+
+# All data for relationship type classification -> ['text1', 'text2', 'label']
+# Note that for now, this is technically the same as `mnli_rtc_data.tsv`;
+# however, if future work augments the data (with additional datasets, etc.),
+# those would be combined into this file as well (analogous to how AMPERSAND
+# and Stab & Gurevych's data were combined)
+ALL_RTC_DATA_FILE = "all_rtc_data.tsv"
+ALL_RTC_DATA_PATH = os.path.join(RTC_DATA_PATH, ALL_RTC_DATA_FILE)
+ALL_RTC_DATAFRAME_FILE = "rtc_dataframe.pkl"
+ALL_RTC_DATAFRAME_PATH = os.path.join(RTC_DATA_PATH, ALL_RTC_DATAFRAME_FILE)
 
 logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
@@ -211,6 +237,76 @@ def save_auc_data_to_dataframe_pkl():
     df.to_pickle(ALL_AUC_DATAFRAME_PATH)
     print(f"> Saved to {ALL_AUC_DATAFRAME_PATH}")
 
+def clean_mnli_data():
+    """
+    Cleans the `multinli_1.0_train.txt` file in `data/MNLI/multinli_1.0/` to
+    have int labels 0, 1, 2 (corresponding to neutral, entailment,
+    contradiction) and drop any badly-formatted rows
+
+    Creates `mnli_rtc_data.tsv` in `data/MNLI/`, which has three columns
+    ['text1', 'text2', 'label']
+    """
+
+    def convert_label(label):
+        if label == "neutral":
+            return 0
+        elif label == "entailment":
+            return 1
+        elif label == "contradiction":
+            return 2
+        else:
+            return -1
+
+    def has_empty_sentence(row):
+        """ Checks if either sentence in a row is an empty string """
+        return row['text1'] == "" or row['text2'] == ""
+
+    print("Cleaning MNLI data...")
+    df = pd.read_csv(
+        MNLI_ORIGINAL_TRAIN_DATA_PATH,
+        sep='\t',
+        header=0,
+        usecols=['sentence1', 'sentence2', 'gold_label'],
+        on_bad_lines='skip' # Some lines are improperly formatted
+    )
+
+    # Rename columns (and reorder them) to ['text1', 'text2', 'label']
+    df = df.rename(columns={
+        "sentence1": "text1",
+        "sentence2": "text2",
+        "gold_label": "label"
+    })
+    df = df[['text1', 'text2', 'label']]
+
+    # Drop rows with empty sentences or invalid labels
+    df['has_empty_sentence'] = df.apply(lambda row: has_empty_sentence(row), axis=1)
+    df = df[df['has_empty_sentence'] == False].drop('has_empty_sentence', axis=1)
+    df['label'] = df['label'].apply(lambda label: convert_label(label))
+    df = df[df['label'] != -1]
+
+    logging.debug(df)
+    df.to_csv(
+        MNLI_RTC_DATA_PATH,
+        sep='\t',
+        index=False, # Don't write index to .tsv
+        columns=['text1', 'text2', 'label']
+    )
+    print(f"> Saved to {MNLI_RTC_DATA_PATH}")
+
+def aggregate_all_rtc_data():
+    pass
+
+def save_rtc_data_to_dataframe_pkl():
+    """
+    Loads the MNLI entailment data (for relationship type classification) into
+    a dataframe and serializes it into a .pkl file with pickle
+
+    Creates `rtc_dataframe.pkl` in `data/RelationshipTypeClassification/`
+    - This is the final file which will be used by the torch.utils.data.Dataset
+      for the relationship type classification submodel
+    """
+    pass
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--argumentative_unit_classification", action="store_true", help="Runs data preprocessing for the AUC datasets (AMPERSAND and Stab & Gurevych)")
@@ -231,5 +327,6 @@ if __name__ == "__main__":
 
     # Run data preprocessing for the MNLI dataset
     if args.relationship_type_classification:
-        print("TODO: relationship_type_classification data preprocessing")
-        pass
+        clean_mnli_data()
+        aggregate_all_rtc_data()
+        save_rtc_data_to_dataframe_pkl()

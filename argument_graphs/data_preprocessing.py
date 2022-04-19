@@ -213,17 +213,17 @@ def save_auc_data_to_dataframe_pkl():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--argument_unit_classification", action="store_true", help="Runs data preprocessing for the AUC datasets (AMPERSAND and Stab & Gurevych)")
+    parser.add_argument("--argumentative_unit_classification", action="store_true", help="Runs data preprocessing for the AUC datasets (AMPERSAND and Stab & Gurevych)")
     parser.add_argument("--relationship_type_classification", action="store_true", help="Runs data preprocessing for the MNLI entailment dataset")
     args = parser.parse_args()
 
     # If no flags are specified, run all preprocessing
-    if (not args.argument_unit_classification) and (not args.relationship_type_classification):
-        args.argument_unit_classification = True
+    if (not args.argumentative_unit_classification) and (not args.relationship_type_classification):
+        args.argumentative_unit_classification = True
         args.relationship_type_classification = True
 
     # Run data preprocessing for the AMPERSAND and Stab & Gurevych datasets
-    if args.argument_unit_classification:
+    if args.argumentative_unit_classification:
         clean_ampersand_data()
         clean_and_combine_sgam_data()
         aggregate_all_auc_data()

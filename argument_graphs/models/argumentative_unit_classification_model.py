@@ -52,11 +52,11 @@ class SequenceClassificationModel(nn.Module):
         num_labels: int = DEFAULT_NUM_LABELS,
     ):
         super(SequenceClassificationModel, self).__init__()
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer, model_max_length=512)
         self.model = AutoModelForSequenceClassification.from_pretrained(model, num_labels=num_labels)
 
     def forward(self, text, label):
-        inputs = self.tokenizer(text, return_tensors="pt")
+        inputs = self.tokenizer(text, padding=True, return_tensors="pt")
         output = self.model(**inputs, labels=label)
         logits, loss = output.logits, output.loss
         pred = logits.argmax().item()
@@ -101,6 +101,7 @@ class ArgumentativeUnitClassificationModel(pl.LightningModule):
     def forward(self, text, label):
         return self.model(text, label)
 
+    # Required for pl.LightningModule
     def training_step(self, batch, batch_idx):
         global losses
         # pl.Lightning convention: training_step() defines prediction and
@@ -122,6 +123,19 @@ class ArgumentativeUnitClassificationModel(pl.LightningModule):
         of 2 loss values (e.g. if there are 2 GPUs being used)
         """
         return sum(batch_parts) / len(batch_parts)
+
+    # Optional for pl.LightningModule
+    def validation_step(self, batch, batch_idx):
+        text, label = batch["text"], batch["label"]
+        pred, loss = self.model(text, label)
+        self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        return loss
+
+    # Optional for pl.LightningModule
+    def validation_epoch_end(self, batch, batch_losses):
+        # Note: `outs` is a list of what was returned in `validation_step()`
+        loss = torch.stack(batch_losses).mean()
+        logging.info(f"val loss for epoch: {loss}")
 
     # Optional for pl.LightningModule
     def test_step(self, batch, batch_idx):

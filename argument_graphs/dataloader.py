@@ -11,12 +11,13 @@ from torch.utils.data import Dataset, DataLoader
 
 logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 DATA_PATH = "./data/ArgumentativeUnitClassification"
 AUC_DATA_FILE = "all_auc_data.tsv"
 AUC_DATA_PATH = os.path.join(DATA_PATH, AUC_DATA_FILE)
 AUC_DATAFRAME_FILE = "auc_dataframe.pkl"
 AUC_DATAFRAME_PATH = os.path.join(DATA_PATH, AUC_DATAFRAME_FILE)
-
 class ArgumentativeUnitClassificationDataset(Dataset):
     """
     torch.utils.data.Dataset for AUC data of the format (text, label), where
@@ -52,6 +53,7 @@ class ArgumentativeUnitClassificationDataset(Dataset):
         label = torch.Tensor(
             [self.data_frame.loc[idx, 'label']]
         ).long().squeeze()
+        # label = self.data_frame.loc[idx, 'label']
 
         item = {
             "text": text,

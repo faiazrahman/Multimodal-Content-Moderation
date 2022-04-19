@@ -6,6 +6,13 @@ python -m argument_graphs.run_argument_graph_submodel_training [--args]
 - Note: You must run this from root because the local package imports (e.g.,
   from `argument_graphs/`) and the data paths are defined based on the root
   directory
+
+You must specify either --argumentative_unit_classification or
+  --relationship_type_classification (i.e. exactly one of those args)
+```
+python -m argument_graphs.run_argument_graph_submodel_training --argumentative_unit_classification
+python -m argument_graphs.run_argument_graph_submodel_training --relationship_type_classification
+```
 """
 
 import os
@@ -23,6 +30,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
 
 from argument_graphs.dataloader import ArgumentativeUnitClassificationDataset
 from argument_graphs.models import ArgumentativeUnitClassificationModel
+from models.callbacks import PrintCallback
 
 # Multiprocessing for dataset batching
 # NUM_CPUS=40 on Yale Ziva server, NUM_CPUS=24 on Yale Tangra server
@@ -34,9 +42,17 @@ DEFAULT_NUM_CPUS = 0
 DEFAULT_GPUS = [0, 1]
 DATA_PATH = "./data/ArgumentativeUnitClassification"
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("CUDA available:", torch.cuda.is_available())
+print(device)
+
 if __name__ == "__main__":
     # torch.multiprocessing.set_start_method('spawn')
     parser = argparse.ArgumentParser()
+    # Only (and only one) of these must be specified as a command-line argument
+    parser.add_argument("--argumentative_unit_classification", action="store_true", help="Runs training for the argumentative unit classification (AUC) model")
+    parser.add_argument("--relationship_type_classification", action="store_true", help="Runs training for the relationship type classification (entailment) model")
+
     parser.add_argument("--config", type=str, default="", help="config.yaml file with experiment configuration")
     parser.add_argument("--only_check_args", action="store_true", help="(Only for testing) Stops script after printing out args; doesn't actually run")
 
@@ -57,6 +73,11 @@ if __name__ == "__main__":
     parser.add_argument("--num_epochs", type=int, default=None)
     args = parser.parse_args()
 
+    if args.argumentative_unit_classification and args.relationship_type_classification:
+        raise Exception("You can only specify ONE of the following at a time: --argumentative_unit_classification or --relationship_type_classification")
+    elif (not args.argumentative_unit_classification) and (not args.relationship_type_classification):
+        raise Exception("You must specify one of the following: --argumentative_unit_classification or --relationship_type_classification")
+
     config = {}
     if args.config is not "":
         with open(str(args.config), "r") as yaml_file:
@@ -73,9 +94,6 @@ if __name__ == "__main__":
     else:
         args.gpus = config.get("gpus", DEFAULT_GPUS)
     if not args.num_cpus: args.num_cpus = config.get("num_cpus", DEFAULT_NUM_CPUS)
-
-    dataset = ArgumentativeUnitClassificationDataset()
-    print(dataset)
 
     print("Running training with the following configuration...")
     print(f"model: {args.model}")
@@ -103,5 +121,98 @@ if __name__ == "__main__":
         "experiment_name": "ArgumentativeUnitClassificationModel",
     }
 
-    model = ArgumentativeUnitClassificationModel(hparams)
-    print(model)
+    full_dataset = None
+    if args.argumentative_unit_classification:
+        full_dataset = ArgumentativeUnitClassificationDataset()
+    logging.info("Total dataset size: {}".format(len(full_dataset)))
+    logging.info(full_dataset)
+
+    # Split into initial train dataset and test dataset
+    # Note: The initial train dataset will further be split into train and val
+    train_size = int(0.8 * len(full_dataset))
+    test_size = len(full_dataset) - train_size
+    # NOTE: You must use the same exact seed for torch.Generate() for both the
+    # training and evaluation of a model to ensure that the two datasets have
+    # no overlapping examples; otherwise, evaluation will not be truly
+    # representative of model performance
+    # https://pytorch.org/docs/stable/data.html#torch.utils.data.random_split
+    train_dataset, test_dataset = torch.utils.data.random_split(
+        full_dataset, [train_size, test_size],
+        generator=torch.Generator().manual_seed(6)
+    )
+
+    # Split into train and validation datasets
+    train_size = int(0.9 * len(train_dataset))
+    val_size = len(train_dataset) - train_size
+    train_dataset, val_dataset = torch.utils.data.random_split(
+        train_dataset, [train_size, val_size],
+        generator=torch.Generator().manual_seed(6)
+    )
+    logging.info(f"Train dataset size: {len(train_dataset)}")
+    logging.info(f"Validation dataset size: {len(val_dataset)}")
+    logging.info(train_dataset)
+    logging.info(val_dataset)
+
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=args.batch_size,
+        num_workers=args.num_cpus
+    )
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=args.batch_size,
+        num_workers=args.num_cpus
+    )
+    logging.info(train_loader)
+    logging.info(val_loader)
+
+    model = None
+    if args.argumentative_unit_classification:
+        model = ArgumentativeUnitClassificationModel(hparams)
+    logging.info(model)
+
+    trainer = None
+
+    latest_checkpoint = ModelCheckpoint(
+        filename="latest-{epoch}-{step}",
+        monitor="step",
+        mode="max",
+        every_n_train_steps=50,
+        save_top_k=2,
+    )
+    final_checkpoint = ModelCheckpoint(
+        filename="final-{epoch}-{step}",
+        monitor="epoch",
+        mode="max",
+        save_top_k=1,
+        save_last=True,
+        save_on_train_epoch_end=True
+    )
+
+    callbacks = [
+        PrintCallback(),
+        TQDMProgressBar(refresh_rate=10),
+        latest_checkpoint,
+        final_checkpoint
+    ]
+
+    if torch.cuda.is_available():
+        # Use all specified GPUs with data parallel strategy
+        # https://pytorch-lightning.readthedocs.io/en/latest/advanced/multi_gpu.html#data-parallel
+        trainer = pl.Trainer(
+            gpus=args.gpus,
+            strategy="dp",
+            callbacks=callbacks,
+            enable_checkpointing=True,
+            max_epochs=args.num_epochs
+        )
+    else:
+        trainer = pl.Trainer(
+            callbacks=callbacks,
+            enable_checkpointing=True,
+            max_epochs=args.num_epochs
+        )
+    logging.info(trainer)
+
+    print(f"Starting training for argumentative unit classification model for {args.num_epochs} epochs...")
+    trainer.fit(model, train_loader, val_loader)

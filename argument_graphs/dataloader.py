@@ -41,6 +41,7 @@ class ArgumentativeUnitClassificationDataset(Dataset):
         from_dataframe_pkl_path: str = AUC_DATAFRAME_PATH,
         tokenizer: str = "bert-base-uncased",
     ):
+        logging.info("Initializing ArgumentativeUnitClassificationDataset...")
         df = None
         if os.path.exists(from_dataframe_pkl_path):
             df = pd.read_pickle(from_dataframe_pkl_path)
@@ -57,6 +58,7 @@ class ArgumentativeUnitClassificationDataset(Dataset):
         # Run tokenization for all text during dataset initialization for
         # faster training and to ensure same tensor sizes (via padding and
         # truncation computed over the entire dataset)
+        logging.info("Running dataset tokenization for ArgumentativeUnitClassificationDataset...")
         self.encoded_texts = [
             self.tokenizer(
                 text,
@@ -122,6 +124,7 @@ class RelationshipTypeClassificationDataset(Dataset):
         from_dataframe_pkl_path: str = RTC_DATAFRAME_PATH,
         tokenizer: str = "bert-base-uncased",
     ):
+        logging.info("Initializing RelationshipTypeClassificationDataset...")
         df = None
         if os.path.exists(from_dataframe_pkl_path):
             df = pd.read_pickle(from_dataframe_pkl_path)
@@ -135,26 +138,13 @@ class RelationshipTypeClassificationDataset(Dataset):
         except:
             raise Exception("Invalid model name passed to transformers.AutoTokenizer")
 
-        # TODO: Run tokenization for all text during dataset initialization
-        # for text1, text2 in zip(self.data_frame['text1'], self.data_frame['text2']):
-        #     # print(text1)
-        #     # print(text2)
-        #     # print(type(text1))
-        #     # print(type(text2))
-        #     if not isinstance(text1, str):
-        #         print(text1)
-        #     if not isinstance(text2, str):
-        #         print(text2)
-        #     inputs = self.tokenizer(
-        #         text1, text2,
-        #         padding="max_length", max_length=512, truncation=True,
-        #         return_tensors="pt"
-        #     )
-        #     # print(inputs)
-
+        # Run tokenization for all text pairs during dataset initialization for
+        # faster training and to ensure same tensor sizes (via padding and
+        # truncation computed over the entire dataset)
+        logging.info("Running dataset tokenization for RelationshipTypeClassificationDataset...")
         self.encoded_texts = [
             # We pass the pair of sentences to the tokenizer as the first and
-            # second arguments; it will then produce
+            # second arguments; it will then automatically produce
             # `[CLS] text1 [SEP] text2 [PAD] ...` and properly set the
             # `token_type_ids` (0 for text1, 1 for text2, then 0 again for the
             # remaining padding)
@@ -175,7 +165,18 @@ class RelationshipTypeClassificationDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        print(self.encoded_texts[idx])
+        encoded_inputs = self.encoded_texts[idx]
+        # TODO: Do we need to .squeeze() tensor dimensions here too?
+
+        label = torch.Tensor(
+            [self.data_frame.loc[idx, 'label']]
+        ).long().squeeze()
+
+        item = {
+            "text": encoded_inputs,
+            "label": label,
+        }
+        return item
 
 if __name__ == "__main__":
     print("WARNING: This is only for testing argument_graphs/dataloader.py")
@@ -185,24 +186,18 @@ if __name__ == "__main__":
     print("\t\tpython -m argument_graphs.dataloader")
     print("\t```")
 
-    # dataset = ArgumentativeUnitClassificationDataset()
-    # print(type(dataset))
-    # print(f"Dataset size: {len(dataset)}\n")
-    # for idx, item in enumerate(dataset):
-    #     text, label = item['text'], item['label']
-    #     print(text); print(label); print("")
-    #     if idx > 10: break
-
-    # tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-    # input = tokenizer('this is the first sentence', 'another sentence')
-    # print(input)
-    # assert(1==2)
+    dataset = ArgumentativeUnitClassificationDataset()
+    print(type(dataset))
+    print(f"Dataset size: {len(dataset)}\n")
+    for idx, item in enumerate(dataset):
+        text, label = item['text'], item['label']
+        print(text); print(label); print("")
+        if idx > 10: break
 
     dataset = RelationshipTypeClassificationDataset()
     print(type(dataset))
     print(f"Dataset size: {len(dataset)}\n")
     for idx, item in enumerate(dataset):
-        pass
-        # text, label = item['text'], item['label']
-        # print(text); print(label); print("")
-        # if idx > 10: break
+        text, label = item['text'], item['label']
+        print(text); print(label); print("")
+        if idx > 10: break

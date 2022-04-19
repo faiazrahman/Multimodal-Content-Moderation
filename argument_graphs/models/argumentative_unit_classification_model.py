@@ -3,6 +3,7 @@ import logging
 
 import torch
 import torch.nn as nn
+import torchmetrics
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import Callback
@@ -58,7 +59,7 @@ class SequenceClassificationModel(nn.Module):
     def forward(self, encoded_text, label):
         output = self.model(**encoded_text, labels=label)
         logits, loss = output.logits, output.loss
-        pred = logits.argmax().item()
+        pred = torch.argmax(logits, dim=1)
         return (pred, loss)
 
 class ArgumentativeUnitClassificationModel(pl.LightningModule):
@@ -92,6 +93,9 @@ class ArgumentativeUnitClassificationModel(pl.LightningModule):
             num_labels=self.hparams.get("num_labels", DEFAULT_NUM_LABELS)
         )
 
+        # https://torchmetrics.readthedocs.io/en/stable/pages/lightning.html
+        self.accuracy = torchmetrics.Accuracy()
+
         # When reloading the model for evaluation and inference, we will need
         # the hyperparameters as they are now
         self.save_hyperparameters()
@@ -118,7 +122,14 @@ class ArgumentativeUnitClassificationModel(pl.LightningModule):
         text, label = batch["text"], batch["label"]
         pred, loss = self.model(text, label)
         self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.accuracy(pred, label)
+        self.log("val_acc", self.accuracy, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
+
+    # Optional for pl.LightningModule
+    def validation_epoch_end(self, outs):
+        print(f"val_acc_epoch: {self.accuracy}")
+        self.log("val_acc_epoch", self.accuracy)
 
     # Optional for pl.LightningModule
     def test_step(self, batch, batch_idx):

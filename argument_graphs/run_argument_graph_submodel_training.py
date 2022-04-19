@@ -54,6 +54,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("CUDA available:", torch.cuda.is_available())
 print(device)
 
+logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
+
 if __name__ == "__main__":
     # torch.multiprocessing.set_start_method('spawn')
     parser = argparse.ArgumentParser()

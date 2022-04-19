@@ -1,0 +1,9 @@
+model: "bert-base-uncased" # Base model for sequence classification; must be in Hugging Face Transformers pretrained models repository; default `bert-base-uncased`
+tokenizer: "bert-base-uncased" # Base tokenizer for sequence classification; must be in Hugging Face Transformers pretrained models repository; default `bert-base-uncased`
+batch_size: 16 # (int) Increase this as much as you can to maximize GPU utilization without exceeding CUDA memory
+learning_rate: 1.0e-4 # (float) Note that the mantissa must have a decimal point to be parsed by YAML as a float (and not a str)
+num_epochs: 5 # (int)
+gpus: [0] # [0] | [1] | [0, 1] Note that it must be a list of ints
+num_cpus: 0 # 0 for no multi-processing (during dataset batching), 24 for Yale Tangra server, 40 for Yale Ziva server
+trained_model_version: 114 # (int)
+trained_model_path: null # (str) Not needed if you specify trained_model_version and it's in lightning_logs/

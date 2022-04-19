@@ -80,8 +80,10 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, default=None, help="Base model for sequence classification; must be in Hugging Face Transformers pretrained models repository; default `bert-base-uncased`")
     parser.add_argument("--tokenizer", type=str, default=None, help="Base tokenizer for sequence classification; must be in Hugging Face Transformers pretrained models repository; default `bert-base-uncased`")
     parser.add_argument("--batch_size", type=int, default=None)
-    parser.add_argument("--learning_rate", type=float, default=None)
     parser.add_argument("--num_epochs", type=int, default=None)
+    parser.add_argument("--learning_rate", type=float, default=None)
+    parser.add_argument("--optimizer", type=str, default=None, help="adam | sgd")
+    parser.add_argument("--sgd_momentum", type=float, default=None)
     args = parser.parse_args()
 
     if args.argumentative_unit_classification and args.relationship_type_classification:
@@ -98,8 +100,10 @@ if __name__ == "__main__":
     if not args.model: args.model = config.get("model", "bert-base-uncased")
     if not args.tokenizer: args.tokenizer = config.get("tokenizer", "bert-base-uncased")
     if not args.batch_size: args.batch_size = config.get("batch_size", 32)
-    if not args.learning_rate: args.learning_rate = config.get("learning_rate", 1e-4)
     if not args.num_epochs: args.num_epochs = config.get("num_epochs", 5)
+    if not args.learning_rate: args.learning_rate = config.get("learning_rate", 1e-4)
+    if not args.optimizer: args.optimizer = config.get("optimizer", "adam")
+    if not args.sgd_momentum: args.sgd_momentum = config.get("sgd_momentum", 0.9)
     if args.gpus:
         args.gpus = [int(gpu_num) for gpu_num in args.gpus.split(",")]
     else:
@@ -110,8 +114,10 @@ if __name__ == "__main__":
     print(f"model: {args.model}")
     print(f"tokenizer: {args.tokenizer}")
     print(f"batch_size: {args.batch_size}")
-    print(f"learning_rate: {args.learning_rate}")
     print(f"num_epochs: {args.num_epochs}")
+    print(f"learning_rate: {args.learning_rate}")
+    print(f"optimizer: {args.optimizer}")
+    if args.optimizer == "sgd": print(f"sgd_momentum: {args.sgd_momentum}")
     print(f"gpus: {args.gpus}")
     print(f"num_cpus: {args.num_cpus}")
 
@@ -124,6 +130,8 @@ if __name__ == "__main__":
         # Used by pl.LightningModule
         "model": args.model,
         "learning_rate": args.learning_rate,
+        "optimizer": args.optimizer,
+        "sgd_momentum": args.sgd_momentum,
 
         # For logging (in `lighting_logs/version_*/hparams.yaml`)
         "tokenizer": args.tokenizer, # Used by torch.utils.data.Dataset
@@ -168,12 +176,14 @@ if __name__ == "__main__":
         train_dataset,
         batch_size=args.batch_size,
         num_workers=args.num_cpus,
+        shuffle=True,
         drop_last=True
     )
     val_loader = DataLoader(
         val_dataset,
         batch_size=args.batch_size,
         num_workers=args.num_cpus,
+        shuffle=True,
         drop_last=True
     )
     logging.info(train_loader)

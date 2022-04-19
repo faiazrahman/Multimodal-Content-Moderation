@@ -83,3 +83,106 @@ class RelationshipTypeClassificationModel(pl.LightningModule):
         num_labels: int = 3
         learning_rate: float = 1e-4
     """
+
+    def __init__(self, hparams=None):
+        super(RelationshipTypeClassificationModel, self).__init__()
+        if hparams:
+            # Cannot reassign self.hparams in pl.LightningModule; must use update()
+            # https://github.com/PyTorchLightning/pytorch-lightning/discussions/7525
+            self.hparams.update(hparams)
+
+        self.model = SequenceClassificationModel(
+            # tokenizer=self.hparams.get("tokenizer", DEFAULT_TOKENIZER),
+            model=self.hparams.get("model", DEFAULT_MODEL),
+            num_labels=self.hparams.get("num_labels", DEFAULT_NUM_LABELS)
+        )
+
+        # https://torchmetrics.readthedocs.io/en/stable/pages/lightning.html
+        self.accuracy = torchmetrics.Accuracy()
+
+        # When reloading the model for evaluation and inference, we will need
+        # the hyperparameters as they are now
+        self.save_hyperparameters()
+
+    # Required for pl.LightningModule
+    def forward(self, text, label=None):
+        return self.model(text, label)
+
+    # Required for pl.LightningModule
+    def training_step(self, batch, batch_idx):
+        global losses
+        # pl.Lightning convention: training_step() defines prediction and
+        # accompanying loss for training, independent of forward()
+        text, label = batch["text"], batch["label"]
+
+        pred, loss = self.model(text, label)
+        self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        print(loss.item())
+        losses.append(loss.item())
+        return loss
+
+    # Optional for pl.LightningModule
+    def validation_step(self, batch, batch_idx):
+        text, label = batch["text"], batch["label"]
+        pred, loss = self.model(text, label)
+        self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.accuracy(pred, label)
+        self.log("val_acc", self.accuracy, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        return loss
+
+    # Optional for pl.LightningModule
+    def validation_epoch_end(self, outs):
+        print(f"val_acc_epoch: {self.accuracy}")
+        self.log("val_acc_epoch", self.accuracy)
+
+    # Optional for pl.LightningModule
+    def test_step(self, batch, batch_idx):
+        text, label = batch["text"], batch["label"]
+        pred, loss = self.model(text, label)
+        accuracy = torch.sum(pred == label).item() / (len(label) * 1.0)
+        output = {
+            'test_loss': loss,
+            'test_acc': torch.tensor(accuracy).cuda()
+        }
+        self.log("test_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log("test_acc", torch.tensor(accuracy).cuda(), on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        print(loss.item(), output['test_acc'])
+        return output
+
+    # Optional for pl.LightningModule
+    def test_epoch_end(self, outputs):
+        avg_loss = torch.stack([x["test_loss"] for x in outputs]).mean()
+        avg_accuracy = torch.stack([x["test_acc"] for x in outputs]).mean()
+        logs = {
+            'test_loss': avg_loss,
+            'test_acc': avg_accuracy
+        }
+
+        # pl.LightningModule has some issues displaying the results automatically
+        # As a workaround, we can store the result logs as an attribute of the
+        # class instance and display them manually at the end of testing
+        # https://github.com/PyTorchLightning/pytorch-lightning/issues/1088
+        self.test_results = logs
+
+        return {
+            'avg_test_loss': avg_loss,
+            'avg_test_acc': avg_accuracy,
+            'log': logs,
+            'progress_bar': logs
+        }
+
+    # Required for pl.LightningModule
+    def configure_optimizers(self):
+        # Default to Adam if optimizer is not specified
+        if "optimizer" not in self.hparams or self.hparams["optimizer"] == "adam":
+            optimizer = torch.optim.Adam(
+                self.parameters(),
+                lr=self.hparams.get("learning_rate", LEARNING_RATE)
+            )
+        elif self.hparams["optimizer"] == "sgd":
+            optimizer = torch.optim.SGD(
+                self.parameters(),
+                lr=self.hparams.get("learning_rate", LEARNING_RATE),
+                momentum=self.hparams.get("sgd_momentum", 0.9)
+            )
+        return optimizer

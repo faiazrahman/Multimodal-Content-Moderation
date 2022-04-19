@@ -200,8 +200,16 @@ class ArgumentativeUnitClassificationModel(pl.LightningModule):
 
     # Required for pl.LightningModule
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(
-            self.parameters(),
-            lr=self.hparams.get("learning_rate", LEARNING_RATE)
-        )
+        # Default to Adam if optimizer is not specified
+        if "optimizer" not in self.hparams or self.hparams["optimizer"] == "adam":
+            optimizer = torch.optim.Adam(
+                self.parameters(),
+                lr=self.hparams.get("learning_rate", LEARNING_RATE)
+            )
+        elif self.hparams["optimizer"] == "sgd":
+            optimizer = torch.optim.SGD(
+                self.parameters(),
+                lr=self.hparams.get("learning_rate", LEARNING_RATE),
+                momentum=self.hparams.get("sgd_momentum", 0.9)
+            )
         return optimizer

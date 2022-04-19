@@ -205,9 +205,7 @@ if __name__ == "__main__":
     # https://github.com/PyTorchLightning/pytorch-lightning/issues/1088
     results = model.test_results
 
-    print(args.test_data_path)
     print(checkpoint_path)
     print(results)
-    logging.info(args.test_data_path)
     logging.info(checkpoint_path)
     logging.info(results)

@@ -13,6 +13,14 @@ You must specify either --argumentative_unit_classification or
 python -m argument_graphs.run_argument_graph_submodel_training --argumentative_unit_classification
 python -m argument_graphs.run_argument_graph_submodel_training --relationship_type_classification
 ```
+
+Yale-specific notes
+- Running on single-GPU on Ziva (NVIDIA GeForce RTX 1080) with batch_size 16
+  has 96-99% GPU utilization
+```
+(mmcm) fsr3@ziva:~/CS490/Multimodal-Content-Moderation$
+python -m argument_graphs.run_argument_graph_submodel_training --argumentative_unit_classification --batch_size 16 --gpus 3
+```
 """
 
 import os
@@ -112,10 +120,10 @@ if __name__ == "__main__":
     hparams = {
         # Used by pl.LightningModule
         "model": args.model,
-        "tokenizer": args.tokenizer,
         "learning_rate": args.learning_rate,
 
         # For logging (in `lighting_logs/version_*/hparams.yaml`)
+        "tokenizer": args.tokenizer, # Used by torch.utils.data.Dataset
         "batch_size": args.batch_size,
         "num_epochs": args.num_epochs,
         "experiment_name": "ArgumentativeUnitClassificationModel",
@@ -123,7 +131,7 @@ if __name__ == "__main__":
 
     full_dataset = None
     if args.argumentative_unit_classification:
-        full_dataset = ArgumentativeUnitClassificationDataset()
+        full_dataset = ArgumentativeUnitClassificationDataset(tokenizer=args.tokenizer)
     logging.info("Total dataset size: {}".format(len(full_dataset)))
     logging.info(full_dataset)
 
@@ -156,12 +164,14 @@ if __name__ == "__main__":
     train_loader = DataLoader(
         train_dataset,
         batch_size=args.batch_size,
-        num_workers=args.num_cpus
+        num_workers=args.num_cpus,
+        drop_last=True
     )
     val_loader = DataLoader(
         val_dataset,
         batch_size=args.batch_size,
-        num_workers=args.num_cpus
+        num_workers=args.num_cpus,
+        drop_last=True
     )
     logging.info(train_loader)
     logging.info(val_loader)
@@ -196,12 +206,20 @@ if __name__ == "__main__":
         final_checkpoint
     ]
 
-    if torch.cuda.is_available():
+    if torch.cuda.is_available() and len(args.gpus) > 1:
         # Use all specified GPUs with data parallel strategy
         # https://pytorch-lightning.readthedocs.io/en/latest/advanced/multi_gpu.html#data-parallel
         trainer = pl.Trainer(
             gpus=args.gpus,
             strategy="dp",
+            callbacks=callbacks,
+            enable_checkpointing=True,
+            max_epochs=args.num_epochs
+        )
+    elif torch.cuda.is_available():
+        # Single GPU training
+        trainer = pl.Trainer(
+            gpus=args.gpus,
             callbacks=callbacks,
             enable_checkpointing=True,
             max_epochs=args.num_epochs

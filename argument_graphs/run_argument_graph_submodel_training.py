@@ -36,8 +36,10 @@ from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
 
-from argument_graphs.dataloader import ArgumentativeUnitClassificationDataset
-from argument_graphs.models import ArgumentativeUnitClassificationModel
+from argument_graphs.dataloader import ArgumentativeUnitClassificationDataset,\
+                                       RelationshipTypeClassificationDataset
+from argument_graphs.models import ArgumentativeUnitClassificationModel,\
+                                   RelationshipTypeClassificationModel
 from models.callbacks import PrintCallback
 
 # Multiprocessing for dataset batching
@@ -87,9 +89,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.argumentative_unit_classification and args.relationship_type_classification:
-        raise Exception("You can only specify ONE of the following at a time: --argumentative_unit_classification or --relationship_type_classification")
+        raise Exception("You can only specify ONE of the following at a time: --argumentative_unit_classification OR --relationship_type_classification")
     elif (not args.argumentative_unit_classification) and (not args.relationship_type_classification):
-        raise Exception("You must specify one of the following: --argumentative_unit_classification or --relationship_type_classification")
+        raise Exception("You must specify one of the following: --argumentative_unit_classification OR --relationship_type_classification")
 
     config = {}
     if args.config is not "":
@@ -143,6 +145,9 @@ if __name__ == "__main__":
     full_dataset = None
     if args.argumentative_unit_classification:
         full_dataset = ArgumentativeUnitClassificationDataset(tokenizer=args.tokenizer)
+    elif args.relationship_type_classification:
+        full_dataset = RelationshipTypeClassificationDataset(tokenizer=args.tokenizer)
+
     logging.info("Total dataset size: {}".format(len(full_dataset)))
     logging.info(full_dataset)
 
@@ -192,6 +197,8 @@ if __name__ == "__main__":
     model = None
     if args.argumentative_unit_classification:
         model = ArgumentativeUnitClassificationModel(hparams)
+    elif args.relationship_type_classification:
+        model = RelationshipTypeClassificationModel(hparams)
     logging.info(model)
 
     trainer = None

@@ -83,9 +83,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.argumentative_unit_classification and args.relationship_type_classification:
-        raise Exception("You can only specify ONE of the following at a time: --argumentative_unit_classification or --relationship_type_classification")
+        raise Exception("You can only specify ONE of the following at a time: --argumentative_unit_classification OR --relationship_type_classification")
     elif (not args.argumentative_unit_classification) and (not args.relationship_type_classification):
-        raise Exception("You must specify one of the following: --argumentative_unit_classification or --relationship_type_classification")
+        raise Exception("You must specify one of the following: --argumentative_unit_classification OR --relationship_type_classification")
 
     config = {}
     if args.config is not "":

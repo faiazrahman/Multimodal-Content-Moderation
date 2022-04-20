@@ -16,10 +16,13 @@ python -m argument_graphs.run_argument_graph_submodel_evaluation --relationship_
 
 Yale-specific notes
 - Running on single-GPU on Ziva (NVIDIA GeForce RTX 3090) with batch_size 16
-  has 96-99% GPU utilization
+  has 96-99% GPU utilization for AUC; with batch_size 32 has 98-100% GPU
+  utilization for RTC
 ```
 (mmcm) faiaz@ziva:~/CS490/Multimodal-Content-Moderation$
 python -m argument_graphs.run_argument_graph_submodel_evaluation --argumentative_unit_classification --config configs/argumentative_unit_classification/auc__bert-base-uncased.yaml --batch_size 16 --gpus 3
+(mmcm) faiaz@ziva:~/CS490/Multimodal-Content-Moderation$
+python -m argument_graphs.run_argument_graph_submodel_evaluation --relationship_type_classification --config configs/argumentative_unit_classification/rtc__bert-base-uncased.yaml --batch_size 32 --gpus 7
 ```
 """
 
@@ -36,8 +39,10 @@ from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
 
-from argument_graphs.dataloader import ArgumentativeUnitClassificationDataset
-from argument_graphs.models import ArgumentativeUnitClassificationModel
+from argument_graphs.dataloader import ArgumentativeUnitClassificationDataset,\
+                                       RelationshipTypeClassificationDataset
+from argument_graphs.models import ArgumentativeUnitClassificationModel, \
+                                   RelationshipTypeClassificationModel
 from models.callbacks import PrintCallback
 from utils import get_checkpoint_filename_from_dir
 
@@ -103,8 +108,10 @@ if __name__ == "__main__":
 
     args.model = config.get("model", "bert-base-uncased")
     args.tokenizer = config.get("tokenizer", "bert-base-uncased")
-    args.learning_rate = config.get("learning_rate", 1e-4)
     args.num_epochs = config.get("num_epochs", 5)
+    args.learning_rate = config.get("learning_rate", 1e-4)
+    args.optimizer = config.get("optimizer", "adam")
+    args.sgd_momentum = config.get("sgd_momentum", 0.9)
 
     args.trained_model_version = config.get("trained_model_version", None)
     args.trained_model_path = config.get("trained_model_path", None)
@@ -113,8 +120,10 @@ if __name__ == "__main__":
     print(f"model: {args.model}")
     print(f"tokenizer: {args.tokenizer}")
     print(f"batch_size: {args.batch_size}")
-    print(f"learning_rate: {args.learning_rate}")
     print(f"num_epochs: {args.num_epochs}")
+    print(f"learning_rate: {args.learning_rate}")
+    print(f"optimizer: {args.optimizer}")
+    if args.optimizer == "sgd": print(f"sgd_momentum: {args.sgd_momentum}")
     print(f"gpus: {args.gpus}")
     print(f"num_cpus: {args.num_cpus}")
 
@@ -122,33 +131,12 @@ if __name__ == "__main__":
         quit()
 
     print("\nStarting evaluation...")
-    checkpoint_path = None
-    if args.trained_model_version:
-        assets_version = None
-        if isinstance(args.trained_model_version, int):
-            assets_version = "version_" + str(args.trained_model_version)
-        elif isinstance(args.trained_model_version, str):
-            assets_version = args.trained_model_version
-        else:
-            raise Exception("assets_version must be either an int (i.e. the version number, e.g. 16) or a str (e.g. \"version_16\"")
-        checkpoint_path = os.path.join(PL_ASSETS_PATH, assets_version, "checkpoints")
-    elif args.trained_model_path:
-        checkpoint_path = args.trained_model_path
-    else:
-        raise Exception("A trained model must be specified for evaluation, either by version number (in default PyTorch Lightning assets path ./lightning_logs) or by custom path")
-
-    checkpoint_filename = get_checkpoint_filename_from_dir(checkpoint_path)
-    checkpoint_path = os.path.join(checkpoint_path, checkpoint_filename)
-    logging.info(checkpoint_path)
-
-    model = None
-    if args.argumentative_unit_classification:
-        model = ArgumentativeUnitClassificationModel.load_from_checkpoint(checkpoint_path)
-    logging.info(model)
 
     full_dataset = None
     if args.argumentative_unit_classification:
         full_dataset = ArgumentativeUnitClassificationDataset(tokenizer=args.tokenizer)
+    elif args.relationship_type_classification:
+        full_dataset = RelationshipTypeClassificationDataset(tokenizer=args.tokenizer)
     logging.info("Total dataset size: {}".format(len(full_dataset)))
     logging.info(full_dataset)
 
@@ -174,11 +162,39 @@ if __name__ == "__main__":
     )
     logging.info(test_loader)
 
+    # TODO(later): Move this code before the dataset?
+    checkpoint_path = None
+    if args.trained_model_version:
+        assets_version = None
+        if isinstance(args.trained_model_version, int):
+            assets_version = "version_" + str(args.trained_model_version)
+        elif isinstance(args.trained_model_version, str):
+            assets_version = args.trained_model_version
+        else:
+            raise Exception("assets_version must be either an int (i.e. the version number, e.g. 16) or a str (e.g. \"version_16\"")
+        checkpoint_path = os.path.join(PL_ASSETS_PATH, assets_version, "checkpoints")
+    elif args.trained_model_path:
+        checkpoint_path = args.trained_model_path
+    else:
+        raise Exception("A trained model must be specified for evaluation, either by version number (in default PyTorch Lightning assets path ./lightning_logs) or by custom path")
+
+    checkpoint_filename = get_checkpoint_filename_from_dir(checkpoint_path)
+    checkpoint_path = os.path.join(checkpoint_path, checkpoint_filename)
+    logging.info(checkpoint_path)
+
+    model = None
+    if args.argumentative_unit_classification:
+        model = ArgumentativeUnitClassificationModel.load_from_checkpoint(checkpoint_path)
+    elif args.relationship_type_classification:
+        model = RelationshipTypeClassificationModel.load_from_checkpoint(checkpoint_path)
+    logging.info(model)
+
     callbacks = [
         PrintCallback(),
         TQDMProgressBar(refresh_rate=10)
     ]
 
+    trainer = None
     if torch.cuda.is_available() and len(args.gpus) > 1:
         # Use all specified GPUs with data parallel strategy
         # https://pytorch-lightning.readthedocs.io/en/latest/advanced/multi_gpu.html#data-parallel

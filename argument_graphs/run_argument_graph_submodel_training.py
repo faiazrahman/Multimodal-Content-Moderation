@@ -16,10 +16,13 @@ python -m argument_graphs.run_argument_graph_submodel_training --relationship_ty
 
 Yale-specific notes
 - Running on single-GPU on Ziva (NVIDIA GeForce RTX 3090) with batch_size 16
-  has 96-99% GPU utilization
+  has 96-99% GPU utilization for AUC; with batch_size 32 has 98-100% GPU
+  utilization for RTC
 ```
 (mmcm) faiaz@ziva:~/CS490/Multimodal-Content-Moderation$
 python -m argument_graphs.run_argument_graph_submodel_training --argumentative_unit_classification --batch_size 16 --gpus 3
+(mmcm) faiaz@ziva:~/CS490/Multimodal-Content-Moderation$
+python -m argument_graphs.run_argument_graph_submodel_training --relationship_type_classification --batch_size 32 --gpus 5
 ```
 """
 
@@ -128,6 +131,12 @@ if __name__ == "__main__":
 
     print("\nStarting training...")
 
+    experiment_name = ""
+    if args.argumentative_unit_classification:
+        experiment_name = "ArgumentativeUnitClassificationModel"
+    elif args.relationship_type_classification:
+        experiment_name = "RelationshipTypeClassificationModel"
+
     hparams = {
         # Used by pl.LightningModule
         "model": args.model,
@@ -139,7 +148,7 @@ if __name__ == "__main__":
         "tokenizer": args.tokenizer, # Used by torch.utils.data.Dataset
         "batch_size": args.batch_size,
         "num_epochs": args.num_epochs,
-        "experiment_name": "ArgumentativeUnitClassificationModel",
+        "experiment_name": experiment_name,
     }
 
     full_dataset = None
@@ -252,5 +261,5 @@ if __name__ == "__main__":
         )
     logging.info(trainer)
 
-    print(f"Starting training for argumentative unit classification model for {args.num_epochs} epochs...")
+    print(f"Starting training for {experiment_name} for {args.num_epochs} epochs...")
     trainer.fit(model, train_loader, val_loader)

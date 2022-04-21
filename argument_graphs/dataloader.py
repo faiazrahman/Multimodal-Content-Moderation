@@ -92,11 +92,21 @@ class ArgumentativeUnitClassificationDataset(Dataset):
         # (1, batch_size, seq_len); thus, we `.squeeze()` to get rid of that
         # extra dimension
         # https://stackoverflow.com/questions/67193312/huggingface-transformers-returning-valueerror-too-many-values-to-unpack-expec
-        encoded_inputs = {
-            'input_ids': encoded_inputs['input_ids'].squeeze(),
-            'token_type_ids': encoded_inputs['token_type_ids'].squeeze(),
-            'attention_mask': encoded_inputs['attention_mask'].squeeze(),
-        }
+        # TODO: Abstract this into a method, since it'll be needed for inference too
+        if 'input_ids' in encoded_inputs:
+            encoded_inputs['input_ids'] = encoded_inputs['input_ids'].squeeze()
+        # RoBERTa does not have token_type_ids, so we check if that key exists
+        if 'token_type_ids' in encoded_inputs:
+            encoded_inputs['token_type_ids'] = encoded_inputs['token_type_ids'].squeeze()
+        if 'attention_mask' in encoded_inputs:
+            encoded_inputs['attention_mask'] = encoded_inputs['attention_mask'].squeeze()
+
+        # encoded_inputs = {
+        #     'input_ids': encoded_inputs['input_ids'].squeeze(),
+        #     'token_type_ids': encoded_inputs['token_type_ids'].squeeze(),
+        #     'attention_mask': encoded_inputs['attention_mask'].squeeze(),
+        # }
+
         label = torch.Tensor(
             [self.data_frame.loc[idx, 'label']]
         ).long().squeeze()
@@ -177,11 +187,19 @@ class RelationshipTypeClassificationDataset(Dataset):
         # (1, batch_size, seq_len); thus, we `.squeeze()` to get rid of that
         # extra dimension
         # https://stackoverflow.com/questions/67193312/huggingface-transformers-returning-valueerror-too-many-values-to-unpack-expec
-        encoded_inputs = {
-            'input_ids': encoded_inputs['input_ids'].squeeze(),
-            'token_type_ids': encoded_inputs['token_type_ids'].squeeze(),
-            'attention_mask': encoded_inputs['attention_mask'].squeeze(),
-        }
+        if 'input_ids' in encoded_inputs:
+            encoded_inputs['input_ids'] = encoded_inputs['input_ids'].squeeze()
+        # RoBERTa does not have token_type_ids, so we check if that key exists
+        if 'token_type_ids' in encoded_inputs:
+            encoded_inputs['token_type_ids'] = encoded_inputs['token_type_ids'].squeeze()
+        if 'attention_mask' in encoded_inputs:
+            encoded_inputs['attention_mask'] = encoded_inputs['attention_mask'].squeeze()
+
+        # encoded_inputs = {
+        #     'input_ids': encoded_inputs['input_ids'].squeeze(),
+        #     'token_type_ids': encoded_inputs['token_type_ids'].squeeze(),
+        #     'attention_mask': encoded_inputs['attention_mask'].squeeze(),
+        # }
 
         label = torch.Tensor(
             [self.data_frame.loc[idx, 'label']]

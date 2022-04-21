@@ -16,13 +16,20 @@ python -m argument_graphs.run_argument_graph_submodel_training --relationship_ty
 
 Yale-specific notes
 - Running on single-GPU on Ziva (NVIDIA GeForce RTX 3090) with batch_size 16
-  has 96-99% GPU utilization for AUC; with batch_size 32 has 98-100% GPU
+  has 96-99% GPU utilization for AUC (for both BERT and RoBERTa); with batch_size 32 has 98-100% GPU
   utilization for RTC
 ```
+# BERT
 (mmcm) faiaz@ziva:~/CS490/Multimodal-Content-Moderation$
 python -m argument_graphs.run_argument_graph_submodel_training --argumentative_unit_classification --batch_size 16 --gpus 3
 (mmcm) faiaz@ziva:~/CS490/Multimodal-Content-Moderation$
 python -m argument_graphs.run_argument_graph_submodel_training --relationship_type_classification --batch_size 32 --gpus 5
+
+# RoBERTa
+(mmcm) faiaz@ziva:~/CS490/Multimodal-Content-Moderation$
+python -m argument_graphs.run_argument_graph_submodel_training --argumentative_unit_classification --config configs/argumentative_unit_classification/auc__roberta-base.yaml --batch_size 16 --gpus 5
+(mmcm) faiaz@ziva:~/CS490/Multimodal-Content-Moderation$
+python -m argument_graphs.run_argument_graph_submodel_training --relationship_type_classification --config configs/argumentative_unit_classification/rtc__roberta-base.yaml --batch_size 32 --gpus 5
 ```
 """
 
@@ -197,7 +204,6 @@ if __name__ == "__main__":
         val_dataset,
         batch_size=args.batch_size,
         num_workers=args.num_cpus,
-        shuffle=True,
         drop_last=True
     )
     logging.info(train_loader)

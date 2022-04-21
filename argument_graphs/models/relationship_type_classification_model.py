@@ -59,6 +59,8 @@ class SequenceClassificationModel(nn.Module):
     def forward(self, encoded_text, label=None):
         output = self.model(**encoded_text, labels=label)
         logits, loss = output.logits, output.loss
+        # TODO: Convert the logits to a probability via softmax and return the
+        # probability tensor as well, since we use this as the entailment score
         pred = torch.argmax(logits, dim=1)
         return (pred, loss)
 

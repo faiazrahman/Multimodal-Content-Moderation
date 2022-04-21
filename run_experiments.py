@@ -11,9 +11,11 @@ def run(command: str):
     and the timestamp at which it was run
     """
 
-    before_config, keyword, after_config = command.partition("--config") # Gets configs/config_name.yaml ...
-    before_slash, keyword, after_slash = after_config.strip().partition("configs/") # Gets config_name.yaml ...
-    config_name = after_slash.split(".")[0] # Gets just config_name
+    config_name = "unnamed"
+    if "--config" in command:
+        before_config, keyword, after_config = command.partition("--config") # Gets configs/config_name.yaml ...
+        before_slash, keyword, after_slash = after_config.strip().partition("configs/") # Gets config_name.yaml ...
+        config_name = after_slash.split(".")[0] # Gets just config_name
 
     timestamp = str(datetime.now()).split(".")[0] # Removes decimal seconds
     log_filename = (config_name + "-" + timestamp).replace(" ", "-")

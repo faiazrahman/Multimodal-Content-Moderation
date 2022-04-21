@@ -79,9 +79,9 @@ class ArgumentGraph:
         - List comprehension
           `return [edge for edge_list in all_edge_lists for edge in edge_list]`
         - Using functools and operator
-          `return functools.reduce(operator.iconcat, all_edge_lists, [])`
+          `return list(functools.reduce(operator.iconcat, all_edge_lists, []))`
         - Using itertools
-          `return itertools.chain.from_iterable(all_edge_lists)`
+          `return list(itertools.chain.from_iterable(all_edge_lists))`
         """
         all_edge_lists = [edges for edges in self.mapping.values() if len(edges) > 0]
-        return itertools.chain.from_iterable(all_edge_lists)
+        return list(functools.reduce(operator.iconcat, all_edge_lists, []))

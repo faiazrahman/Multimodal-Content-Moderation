@@ -1,3 +1,4 @@
+import spacy
 from typing import List
 
 class UtteranceToArgumentativeUnitSegmenter:

@@ -18,7 +18,7 @@ class ArgumentativeUnitNode:
     def __init__(
         self,
         text: str = "",
-        classification: ArgumentativeUnitType = None
+        classification: ArgumentativeUnitType = None,
     ):
         self.text = text
         self.classification = classification

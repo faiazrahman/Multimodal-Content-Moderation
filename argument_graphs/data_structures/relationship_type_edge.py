@@ -19,9 +19,9 @@ class RelationshipTypeEdge:
 
     def __init__(
         self,
-        source_node: ArgumentativeUnitNode,
-        target_node: ArgumentativeUnitNode,
-        relation: RelationshipType
+        source_node: ArgumentativeUnitNode = None,
+        target_node: ArgumentativeUnitNode = None,
+        relation: RelationshipType = None,
     ):
         self.source_node = source_node
         self.target_node = target_node

@@ -204,6 +204,7 @@ if __name__ == "__main__":
         val_dataset,
         batch_size=args.batch_size,
         num_workers=args.num_cpus,
+        shuffle=False, # Do not shuffle DataLoader for validation
         drop_last=True
     )
     logging.info(train_loader)

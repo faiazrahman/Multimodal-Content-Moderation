@@ -87,6 +87,7 @@ if __name__ == "__main__":
     #   passed manually as an arg -> specified in given config file -> default
     # This allows experiments defined in config files to be easily replicated
     # while tuning specific parameters via command-line args
+    parser.add_argument("--trained_model_version", type=int, default=None)
     parser.add_argument("--batch_size", type=int, default=None)
     parser.add_argument("--gpus", type=str, help="Comma-separated list of ints with no spaces; e.g. \"0\" or \"0,1\"")
     parser.add_argument("--num_cpus", type=int, default=None, help="0 for no multi-processing, 24 on Yale Tangra server, 40 on Yale Ziva server")
@@ -97,6 +98,8 @@ if __name__ == "__main__":
     elif (not args.argumentative_unit_classification) and (not args.relationship_type_classification):
         raise Exception("You must specify one of the following: --argumentative_unit_classification OR --relationship_type_classification")
 
+    # TODO: Allow passing just a trained model version number, since we can get
+    # the hyperparameters from its lightning_logs/version_*/hparams.yaml file
     config = {}
     if args.config is not "":
         with open(str(args.config), "r") as yaml_file:
@@ -118,9 +121,12 @@ if __name__ == "__main__":
     args.optimizer = config.get("optimizer", "adam")
     args.sgd_momentum = config.get("sgd_momentum", 0.9)
 
-    args.trained_model_version = config.get("trained_model_version", None)
+    if not args.trained_model_version: args.trained_model_version = config.get("trained_model_version", None)
     args.trained_model_path = config.get("trained_model_path", None)
 
+    # TODO: Load the hyperparameters from lightning_logs/version_*/hparams.yaml,
+    # otherwise if you override --trained_model_version, it won't display the
+    # correct hyperparameters
     print("Running evaluation for a model with the following configuration...")
     print(f"model: {args.model}")
     print(f"tokenizer: {args.tokenizer}")

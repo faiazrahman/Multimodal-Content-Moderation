@@ -20,6 +20,10 @@ def run(command: str):
             before_slash, keyword, after_slash = after_slash.strip().partition("/")
         config_name = after_slash.split(".")[0] # Gets just config_name
 
+    if "evaluation" in command:
+        # Name evaluation logs with prefix
+        config_name = "eval__" + config_name
+
     timestamp = str(datetime.now()).split(".")[0] # Removes decimal seconds
     log_filename = (config_name + "-" + timestamp).replace(" ", "-")
     log_filepath = os.path.join(LOGS_DIR, log_filename) + ".log"

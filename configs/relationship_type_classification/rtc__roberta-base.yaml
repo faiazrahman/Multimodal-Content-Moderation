@@ -5,5 +5,5 @@ learning_rate: 1.0e-4 # (float) Note that the mantissa must have a decimal point
 num_epochs: 5 # (int)
 gpus: [0] # [0] | [1] | [0, 1] Note that it must be a list of ints
 num_cpus: 0 # 0 for no multi-processing (during dataset batching), 24 for Yale Tangra server, 40 for Yale Ziva server
-trained_model_version: 133
+trained_model_version: 143
 trained_model_path: null # (str) Not needed if you specify trained_model_version and it's in lightning_logs/

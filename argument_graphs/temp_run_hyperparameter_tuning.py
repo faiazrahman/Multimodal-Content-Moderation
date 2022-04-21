@@ -16,7 +16,7 @@ from run_experiments import run
 GPU_ID = 3
 
 def hyperparameter_tuning_auc():
-    # Hyperparameter tuning for AUC with {BERT, RoBERTA}
+    # Hyperparameter tuning for AUC with {BERT, RoBERTa}
     optimizers = ["adam", "sgd"]
     learning_rates = [1e-3, 5e-4, 3e-4, 1e-4, 5e-5, 3e-5, 1e-5]
     combinations = list(itertools.product(optimizers, learning_rates))
@@ -32,7 +32,7 @@ def hyperparameter_tuning_auc():
         run(f"python -m argument_graphs.run_argument_graph_submodel_training --argumentative_unit_classification --config configs/argumentative_unit_classification/auc__roberta-base.yaml --batch_size 16 --num_epochs 5 --optimizer {opt} --learning_rate {lr} --gpus {GPU_ID}")
 
 def hyperparameter_tuning_rtc():
-    # Hyperparameter tuning for RTC with {BERT, RoBERTA}
+    # Hyperparameter tuning for RTC with {BERT, RoBERTa}
     optimizers = ["adam", "sgd"]
     learning_rates = [1e-3, 5e-4, 3e-4, 1e-4, 5e-5, 3e-5, 1e-5]
     combinations = list(itertools.product(optimizers, learning_rates))

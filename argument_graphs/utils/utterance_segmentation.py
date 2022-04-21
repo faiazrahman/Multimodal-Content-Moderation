@@ -1,5 +1,10 @@
 import spacy
+import time
 from typing import List
+
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 class UtteranceToArgumentativeUnitSegmenter:
 
@@ -13,7 +18,11 @@ class UtteranceToArgumentativeUnitSegmenter:
 
         self.spacy_pipeline = None
         if segmentation_method == "sentence":
+            logging.info(f"UtteranceToArgumentativeUnitSegmenter: Using segmentation_method={segmentation_method}, setting up spaCy pipeline...")
+            start = time.time()
             self.spacy_pipeline = spacy.load("en_core_web_sm")
+            end = time.time()
+            logging.info(f"> Done! (In {end - start} seconds)")
 
     def segment(self, text: str) -> List[str]:
         """
@@ -28,7 +37,10 @@ class UtteranceToArgumentativeUnitSegmenter:
     def run_sentence_segmentation(self, text: str) -> List[str]:
         """
         Segments a text string into sentences
+
+        Note: spaCy returns a `spacy.tokens.span.Span` object by default; we
+        extract the string via `.text`
         """
         processed_text = self.spacy_pipeline(text)
-        sentences = [sentence for sentence in processed_text.sents]
+        sentences = [sentence.text for sentence in processed_text.sents]
         return sentences

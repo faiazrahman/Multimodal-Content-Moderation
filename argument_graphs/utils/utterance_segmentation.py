@@ -1,8 +1,8 @@
-import spacy
 import time
+import logging
 from typing import List
 
-import logging
+import spacy
 
 logging.basicConfig(level=logging.INFO)
 

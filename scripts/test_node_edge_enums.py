@@ -1,0 +1,28 @@
+from argument_graphs.data_structures import ArgumentativeUnitType, RelationshipType
+
+if __name__ == "__main__":
+    nau = ArgumentativeUnitType.from_label(0)
+    print(nau)
+    assert(nau.value == ArgumentativeUnitType.NON_ARGUMENTATIVE_UNIT.value)
+    claim = ArgumentativeUnitType.from_label(1)
+    print(claim)
+    assert(claim.value == ArgumentativeUnitType.CLAIM.value)
+    premise = ArgumentativeUnitType.from_label(2)
+    print(premise)
+    assert(premise.value == ArgumentativeUnitType.PREMISE.value)
+    root = ArgumentativeUnitType.from_label(3)
+    print(root)
+    assert(root.value == ArgumentativeUnitType.ROOT_NODE.value)
+
+    neutral = RelationshipType.from_label(0)
+    print(neutral)
+    assert(neutral.value == RelationshipType.NEUTRAL.value)
+    supports = RelationshipType.from_label(1)
+    print(supports)
+    assert(supports.value == RelationshipType.SUPPORTS.value)
+    contradicts = RelationshipType.from_label(2)
+    print(contradicts)
+    assert(contradicts.value == RelationshipType.CONTRADICTS.value)
+    to_root = RelationshipType.from_label(3)
+    print(to_root)
+    assert(to_root.value == RelationshipType.TO_ROOT.value)

@@ -10,10 +10,25 @@ class RelationshipType(enum.Enum):
     TO_ROOT = 3
 
     def __str__(self):
+        """ Call as `str(...)` """
         return str(self.name)
 
     def __int__(self):
+        """ Call as `int(...)` """
         return int(self.value)
+
+    @classmethod
+    def from_label(cls, label: int) -> 'RelationshipType':
+        if label == cls.NEUTRAL.value:
+            return cls.NEUTRAL
+        elif label == cls.SUPPORTS.value:
+            return cls.SUPPORTS
+        elif label == cls.CONTRADICTS.value:
+            return cls.CONTRADICTS
+        elif label == cls.TO_ROOT.value:
+            return cls.TO_ROOT
+        else:
+            return None
 
 class RelationshipTypeEdge:
 

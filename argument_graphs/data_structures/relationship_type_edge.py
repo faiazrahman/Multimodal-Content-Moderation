@@ -1,6 +1,6 @@
 import enum
 
-from argumentative_unit_node import ArgumentativeUnitNode
+from .argumentative_unit_node import ArgumentativeUnitNode
 
 class RelationshipType(enum.Enum):
     """ Represents a classification of an entailment relationship """

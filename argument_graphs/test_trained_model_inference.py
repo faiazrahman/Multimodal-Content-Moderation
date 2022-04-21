@@ -11,6 +11,7 @@ python -m argument_graphs.test_trained_model_inference
 import os
 import logging
 import argparse
+import time
 
 from transformers import AutoTokenizer
 
@@ -35,6 +36,8 @@ if __name__ == "__main__":
     model = ArgumentativeUnitClassificationModel.load_from_checkpoint(checkpoint_path)
     tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 
+    start = time.time()
+
     text = [
         # Claims (label:1)
         "I think we should make healthcare free",
@@ -58,3 +61,10 @@ if __name__ == "__main__":
     pred = model(encoded_inputs)[0]
     print(pred)
     print(pred.tolist())
+
+    end = time.time()
+
+    print("Time for inference:")
+    print(f" start:   {start}")
+    print(f" end:     {end}")
+    print(f" elapsed: {end - start}")

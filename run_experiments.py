@@ -15,6 +15,9 @@ def run(command: str):
     if "--config" in command:
         before_config, keyword, after_config = command.partition("--config") # Gets configs/config_name.yaml ...
         before_slash, keyword, after_slash = after_config.strip().partition("configs/") # Gets config_name.yaml ...
+        # For configs inside a subdirectory, there are two slashes, so repeat
+        if "/" in after_slash:
+            before_slash, keyword, after_slash = after_slash.strip().partition("/")
         config_name = after_slash.split(".")[0] # Gets just config_name
 
     timestamp = str(datetime.now()).split(".")[0] # Removes decimal seconds

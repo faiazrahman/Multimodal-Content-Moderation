@@ -3,6 +3,12 @@ Run from root directory
 ```
 python -m argument_graphs.run_hyperparameter_tuning
 ```
+
+Note: If you notice that a job is not learning at all, you don't have to wait
+for it to finish; you can stop it immediately and move on to the next job.
+- Python's `subprocess` creates a new process, so you can kill just that
+  process (and not this entire script) via pid using the usual Unix kill
+  command; i.e., run `nvidia-smi` to see the process ID, then run `kill <pid>`.
 """
 
 import itertools

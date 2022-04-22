@@ -9,7 +9,7 @@ import itertools
 
 from run_experiments import run
 
-GPU_ID = 3
+GPU_ID = 1
 
 def evaluation_auc():
     # Hyperparameter tuning for AUC created models 145 to 172, inclusive

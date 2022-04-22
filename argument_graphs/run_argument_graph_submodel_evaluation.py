@@ -80,13 +80,6 @@ if __name__ == "__main__":
     parser.add_argument("--config", type=str, default="", help="config.yaml file with experiment configuration")
     parser.add_argument("--only_check_args", action="store_true", help="(Only for testing) Stops script after printing out args; doesn't actually run")
 
-    # We default all hyperparameters to None so that their default values can
-    # be taken from a config file; if the config file is not specified, then we
-    # use the given default values in the `config.get()` calls (see below)
-    # Thus the order of precedence for hyperparameter values is
-    #   passed manually as an arg -> specified in given config file -> default
-    # This allows experiments defined in config files to be easily replicated
-    # while tuning specific parameters via command-line args
     parser.add_argument("--trained_model_version", type=int, default=None)
     parser.add_argument("--batch_size", type=int, default=None)
     parser.add_argument("--gpus", type=str, help="Comma-separated list of ints with no spaces; e.g. \"0\" or \"0,1\"")
@@ -98,14 +91,15 @@ if __name__ == "__main__":
     elif (not args.argumentative_unit_classification) and (not args.relationship_type_classification):
         raise Exception("You must specify one of the following: --argumentative_unit_classification OR --relationship_type_classification")
 
-    # TODO: Allow passing just a trained model version number, since we can get
-    # the hyperparameters from its lightning_logs/version_*/hparams.yaml file
+    # NOTE: We allow passing just a trained model version number, since we can
+    # get the hyperparameters from its `lightning_logs/version_*/hparams.yaml` file
     config = {}
     if args.config is not "":
         with open(str(args.config), "r") as yaml_file:
             config = yaml.safe_load(yaml_file)
     else:
-        raise Exception("You must pass a config filename to --config to run evaluation; this must match the experiment configuration used for training the model")
+        if not args.trained_model_version:
+            raise Exception("You must either pass a config filename to --config (which must match the experiment configuration used for training the model) OR pass a --trained_model_version to run evaluation")
 
     if not args.batch_size: args.batch_size = config.get("batch_size", 16)
     if args.gpus:
@@ -114,23 +108,43 @@ if __name__ == "__main__":
         args.gpus = config.get("gpus", DEFAULT_GPUS)
     if not args.num_cpus: args.num_cpus = config.get("num_cpus", DEFAULT_NUM_CPUS)
 
-    args.model = config.get("model", "bert-base-uncased")
-    args.tokenizer = config.get("tokenizer", "bert-base-uncased")
-    args.num_epochs = config.get("num_epochs", 5)
-    args.learning_rate = config.get("learning_rate", 1e-4)
-    args.optimizer = config.get("optimizer", "adam")
-    args.sgd_momentum = config.get("sgd_momentum", 0.9)
+    original_batch_size = None
+    if args.trained_model_version:
+        # User specified a trained model version as a command-line arg
+        # Get the hyperparameters from its trained model assets folder's hparams.yaml
+        trained_model_assets_hparams_filepath = os.path.join(
+            "lightning_logs",
+            "version_" + str(args.trained_model_version),
+            "hparams.yaml")
+        hparams_config = {}
+        with open(trained_model_assets_hparams_filepath, "r") as yaml_file:
+            hparams_config = yaml.safe_load(yaml_file)
+        args.model = hparams_config.get("model", None)
+        args.tokenizer = hparams_config.get("tokenizer", None)
+        original_batch_size = hparams_config.get("batch_size", None)
+        args.num_epochs = hparams_config.get("num_epochs", None)
+        args.learning_rate = hparams_config.get("learning_rate", None)
+        args.optimizer = hparams_config.get("optimizer", None)
+        if args.optimizer == "sgd":
+            args.sgd_momentum = hparams_config.get("sgd_momentum", None)
+    else:
+        # Otherwise, load the hparams from the specified config file
+        args.trained_model_version = config.get("trained_model_version", None)
+        args.trained_model_path = config.get("trained_model_path", None)
 
-    if not args.trained_model_version: args.trained_model_version = config.get("trained_model_version", None)
-    args.trained_model_path = config.get("trained_model_path", None)
+        args.model = config.get("model", "bert-base-uncased")
+        args.tokenizer = config.get("tokenizer", "bert-base-uncased")
+        args.batch_size = config.get("batch_size", 16)
+        args.num_epochs = config.get("num_epochs", 5)
+        args.learning_rate = config.get("learning_rate", 1e-4)
+        args.optimizer = config.get("optimizer", "adam")
+        if args.optimizer == "sgd":
+            args.sgd_momentum = config.get("sgd_momentum", 0.9)
 
-    # TODO: Load the hyperparameters from lightning_logs/version_*/hparams.yaml,
-    # otherwise if you override --trained_model_version, it won't display the
-    # correct hyperparameters
-    print("Running evaluation for a model with the following configuration...")
+    print(f"Running evaluation with batch_size={args.batch_size} for a model trained with the following configuration...")
     print(f"model: {args.model}")
     print(f"tokenizer: {args.tokenizer}")
-    print(f"batch_size: {args.batch_size}")
+    print(f"batch_size: {original_batch_size}")
     print(f"num_epochs: {args.num_epochs}")
     print(f"learning_rate: {args.learning_rate}")
     print(f"optimizer: {args.optimizer}")

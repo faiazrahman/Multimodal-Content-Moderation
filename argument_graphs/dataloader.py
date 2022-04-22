@@ -47,9 +47,9 @@ class ArgumentativeUnitClassificationDataset(Dataset):
             df = pd.read_pickle(from_dataframe_pkl_path)
         else:
             raise Exception("AUC dataframe does not exist\nRun argument_graphs/data_preprocessing.py")
-        # TODO: NEW HYPERPARAMETER TUNING JOBS FOR AUC USE PRESHUFFLE
-        # Shuffle the initial dataset and reset its index
-        df = df.sample(frac=1).reset_index(drop=True)
+
+        # Shuffle the initial dataset (reproducibly) and reset its index
+        df = df.sample(frac=1, random_state=6).reset_index(drop=True)
         self.data_frame = df
 
         self.tokenizer = None

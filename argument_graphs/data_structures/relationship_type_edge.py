@@ -9,6 +9,10 @@ class RelationshipType(enum.Enum):
     CONTRADICTS = 2
     TO_ROOT = 3
 
+    # For reverse edges only in an ArgumentGraph; used in the reverse_mapping
+    # to show parent-to-child relations
+    TO_CHILD = 4
+
     def __str__(self):
         """ Call as `str(...)` """
         return str(self.name)
@@ -27,6 +31,8 @@ class RelationshipType(enum.Enum):
             return cls.CONTRADICTS
         elif label == cls.TO_ROOT.value:
             return cls.TO_ROOT
+        elif label == cls.TO_CHILD.value:
+            return cls.TO_CHILD
         else:
             return None
 

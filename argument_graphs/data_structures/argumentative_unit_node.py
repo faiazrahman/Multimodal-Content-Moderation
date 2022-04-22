@@ -36,5 +36,17 @@ class ArgumentativeUnitNode:
         text: str = "",
         classification: ArgumentativeUnitType = None,
     ):
+        """
+        Attributes
+            text: String of the argumentative unit (e.g. the sentence)
+            classification: The type of arugmentative unit (e.g. claim,
+                premise, non-argumentative unit)
+            subtree_size: (When used in an ArgumentGraph) The size of the
+                subtree with the current node as its root; this is used by the
+                graph linearization algorithm to avoid doing duplicate subtree
+                size calculations (i.e. allowing us to compute once and cache
+                these values within the nodes)
+        """
         self.text = text
         self.classification = classification
+        self.subtree_size = 0

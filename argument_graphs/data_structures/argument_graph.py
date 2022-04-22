@@ -4,6 +4,7 @@ import operator
 from collections import defaultdict
 from typing import List, Dict
 
+from ..utils import ArgumentGraphLinearizer
 from .argumentative_unit_node import ArgumentativeUnitType, ArgumentativeUnitNode
 from .relationship_type_edge import RelationshipType, RelationshipTypeEdge
 
@@ -74,7 +75,8 @@ class ArgumentGraph:
 
     def linearize(self) -> str:
         """ Linearizes the argument graph into a single text string """
-        raise NotImplementedError("TODO: Graph linearization algorithm")
+        linearizer = ArgumentGraphLinearizer()
+        return linearizer.linearize(self)
 
     @property
     def all_nodes(self) -> List[ArgumentativeUnitNode]:

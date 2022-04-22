@@ -1,14 +1,12 @@
 from collections import deque
 from typing import List
 
-from argument_graphs.data_structures import ArgumentGraph, ArgumentativeUnitNode
-
 class ArgumentGraphLinearizer:
 
     def __init__(self, linearization_method: str = "greedy-heuristics"):
         self.linearization_method = linearization_method
 
-    def linearize(self, graph: ArgumentGraph, separator: str = "\n") -> str:
+    def linearize(self, graph: 'ArgumentGraph', separator: str = "\n") -> str:
         """
         Runs graph linearization algorithm, returning a linearized text string
         """
@@ -22,7 +20,7 @@ class ArgumentGraphLinearizer:
 
     def run_top_down_greedy_heuristics_linearization(
         self,
-        graph: ArgumentGraph,
+        graph: 'ArgumentGraph',
         separator: str = "\n"
     ) -> str:
         """
@@ -46,14 +44,14 @@ class ArgumentGraphLinearizer:
         # Add the child claim nodes of the root to the stack s.t. the claim
         # with the largest subtree is at the top (and will be processed first,
         # as per the Subtree Size Prioritization Heuristic)
-        root_child_claims: List[ArgumentativeUnitNode] = graph.get_child_claim_nodes(graph.root)
+        root_child_claims = graph.get_child_claim_nodes(graph.root)
         root_child_claims.sort(key=lambda node: node.subtree_size, reverse=False)
         for child_claim in root_child_claims:
             stack.append(child_claim)
 
         # Run traversal
         while len(stack) != 0:
-            curr_node: ArgumentativeUnitNode = stack.pop()
+            curr_node = stack.pop() # type: ArgumentativeUnitNode
             if curr_node in visited_nodes:
                 # Depending on how the graph is constructed, this may not
                 # ever happen

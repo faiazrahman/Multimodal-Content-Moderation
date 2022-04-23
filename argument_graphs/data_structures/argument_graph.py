@@ -1,7 +1,7 @@
 import itertools
 import functools
 import operator
-from collections import defaultdict
+from collections import defaultdict, deque
 from typing import List, Dict
 
 from ..utils import ArgumentGraphLinearizer
@@ -167,3 +167,47 @@ class ArgumentGraph:
         for child_node in self.get_all_child_nodes(curr_node):
             self._compute_child_subtree_sizes(child_node)
             curr_node.subtree_size += child_node.subtree_size
+
+    def print_graph(self):
+        """
+        Prints the argument graph to the terminal, for simple visuals
+
+        e.g.
+
+        CLAIM: Free healthcare should be a human right
+        -PREMISE: Free healthcare in Canada is well-received
+        -PREMISE: Citizens like free healthcare
+            CLAIM: I think free healthcare is great
+            -PREMISE: My healthcare plan is free
+        CLAIM: The president's healthcare policies are horrible
+        -PREMISE: Did you see the awful healthcare policy?
+        -PREMISE: Citizens are upset
+        """
+
+        TAB = "    "
+
+        print(type(self))
+        visited_nodes = set()
+        stack = deque()
+
+        root_child_claims = self.get_child_claim_nodes(self.root)
+        for child_claim in root_child_claims:
+            stack.append((child_claim, TAB))
+
+        while len(stack) != 0:
+            curr_node, tabs = stack.pop()
+            if curr_node in visited_nodes:
+                continue
+            visited_nodes.add(curr_node)
+
+            # Print current claim node and its immediate child premises
+            print(tabs + str(curr_node.classification) + ": " + curr_node.text)
+            child_premises = self.get_child_premise_nodes(curr_node)
+            for premise in child_premises:
+                print(tabs + "-" + str(premise.classification) + ": " + premise.text)
+
+            # Append the child claims (with one additional tab)
+            child_claims = self.get_child_claim_nodes(curr_node)
+            for claim in child_claims:
+                stack.append((claim, tabs + TAB))
+        print("")

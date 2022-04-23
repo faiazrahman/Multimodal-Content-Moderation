@@ -124,7 +124,12 @@ class ArgumentGraphConstructor:
                 )
                 graph.add_edge(edge)
 
+        # Claim-to-claim entailment
+        # TODO: Design greedy selection process to avoid cycles
+
+        # ::TESTING
         graph.print_graph()
+        # ::END
 
     @staticmethod
     def source_to_targets_entailment(

@@ -3,3 +3,4 @@
 # dependency
 from .utterance_segmentation import UtteranceToArgumentativeUnitSegmenter
 from .graph_linearization import ArgumentGraphLinearizer
+from .graph_construction import ArgumentGraphConstructor

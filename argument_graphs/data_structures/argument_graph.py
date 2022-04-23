@@ -191,6 +191,7 @@ class ArgumentGraph:
         stack = deque()
 
         root_child_claims = self.get_child_claim_nodes(self.root)
+        root_child_claims.sort(key=lambda node: node.subtree_size, reverse=False)
         for child_claim in root_child_claims:
             stack.append((child_claim, TAB))
 
@@ -208,6 +209,7 @@ class ArgumentGraph:
 
             # Append the child claims (with one additional tab)
             child_claims = self.get_child_claim_nodes(curr_node)
+            child_claims.sort(key=lambda node: node.subtree_size, reverse=False)
             for claim in child_claims:
                 stack.append((claim, tabs + TAB))
         print("")

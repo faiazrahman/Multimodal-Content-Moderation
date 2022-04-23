@@ -134,7 +134,7 @@ class ArgumentGraph:
         return [edge.target_node for edge in self.reverse_mapping[node]
                 if edge.target_node.classification == ArgumentativeUnitType.PREMISE]
 
-    def set_claim_child_subtree_sizes(self):
+    def set_child_subtree_sizes(self):
         """
         Recursively computes the child subtree sizes for every claim node in
         the tree, starting from the root node's child claims
@@ -150,13 +150,20 @@ class ArgumentGraph:
 
     def _compute_child_subtree_sizes(
         self,
-        subtree_root_node: ArgumentativeUnitNode
+        curr_node: ArgumentativeUnitNode
     ):
         """
         Recursively computes the child subtree sizes for a single, connected
         subtree with the given root node
 
-        Note that this only assigns values for claim nodes, since premise nodes
-        have no children (so their subtree_size remains 0)
+        Note that all premise nodes will have subtree_size of 1 (just themself,
+        since they have no children)
+
+        Note: On large argument graphs, this recursive approach may exceed the
+        call stack limit; as a result, an iterative approach with a stack data
+        structure may need to be implemented instead
         """
-        raise NotImplementedError("TODO: Subtree size recursive algorithm")
+        curr_node.subtree_size = 1
+        for child_node in self.get_all_child_nodes(curr_node):
+            self._compute_child_subtree_sizes(child_node)
+            curr_node.subtree_size += child_node.subtree_size

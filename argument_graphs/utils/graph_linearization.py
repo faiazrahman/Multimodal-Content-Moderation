@@ -32,7 +32,7 @@ class ArgumentGraphLinearizer:
         linearized_graph_components = list()
 
         # Pre-compute claim subtree sizes
-        graph.set_claim_child_subtree_sizes()
+        graph.set_child_subtree_sizes()
 
         # Initialize stack for depth-first traversal
         # Note that the stack only contains claim nodes (since premises are

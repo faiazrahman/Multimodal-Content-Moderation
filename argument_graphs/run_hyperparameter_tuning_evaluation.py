@@ -51,8 +51,15 @@ def evaluation_rtc():
         # 173, # bert, adam, 1e-3
         # 259, # bert, adam, 5e-4
         # 229, # bert, adam, 3e-4
-        243, # bert, adam, 5e-5
-        263, # bert, adam, 3e-5
+        # 243, # bert, adam, 1e-4
+        # 263, # bert, adam, 5e-5
+        # 264, # bert, adam, 3e-5
+        267, # bert, adam, 1e-5
+        269, # bert, sgd, 1e-3
+        270, # bert, sgd, 5e-4
+        271, # bert, sgd, 3e-4
+        272, # bert, sgd, 1e-4
+        273, # bert, sgd, 5e-5
     ]
     for version_number in bert_model_version_numbers:
         print(f"Evaluating model version_{version_number}")

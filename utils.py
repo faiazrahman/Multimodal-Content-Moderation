@@ -5,7 +5,9 @@ Various utilities for running experiments and evaluation
 import os
 from functools import cmp_to_key
 
-def get_checkpoint_filename_from_dir(path: str):
+PL_ASSETS_PATH = "./lightning_logs"
+
+def get_checkpoint_filename_from_dir(path: str) -> str:
     """
     Gets the final checkpoint for the trained model, in the
     lightning_logs/version_{NUM}/checkpoints/ directory
@@ -59,3 +61,12 @@ def get_checkpoint_filename_from_dir(path: str):
         )[0]
 
     return os.listdir(path)[0]
+
+def get_checkpoint_path_from_trained_model_version(
+    trained_model_version: int
+) -> str:
+    assets_version = "version_" + str(trained_model_version)
+    checkpoint_path = os.path.join(PL_ASSETS_PATH, assets_version, "checkpoints")
+    checkpoint_filename = get_checkpoint_filename_from_dir(checkpoint_path)
+    checkpoint_path = os.path.join(checkpoint_path, checkpoint_filename)
+    return checkpoint_path

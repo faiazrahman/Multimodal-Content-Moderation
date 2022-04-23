@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 from transformers import AutoTokenizer
@@ -11,6 +12,8 @@ from argument_graphs.submodels import ArgumentativeUnitClassificationModel, \
     RelationshipTypeClassificationModel
 from .utterance_segmentation import UtteranceToArgumentativeUnitSegmenter
 
+logging.basicConfig(level=logging.INFO)
+
 class ArgumentGraphConstructor:
 
     def __init__(
@@ -23,6 +26,9 @@ class ArgumentGraphConstructor:
         auc_model_batch_size: int = 16,
         rtc_model_batch_size: int = 32,
     ):
+        logging.info("Initializing ArgumentGraphConstructor instance...")
+        logging.info("NOTE: Make sure that the auc_tokenizer_model_name matches the base model of the given auc_trained_model_version (and the same for rtc_*)")
+        logging.info("> You can check what base model was used to train each model by checking hparams.yaml files in the lightning_logs/ folders for your trained models")
         if not auc_trained_model_version or not rtc_trained_model_version:
             raise ValueError("ArgumentGraphConstructor must be passed both an auc_trained_model_version and a rtc_trained_model_version")
 
@@ -70,6 +76,7 @@ class ArgumentGraphConstructor:
                 tokenizer=self.auc_tokenizer
             )
             preds, losses = self.auc_model(encoded_inputs)
+            print(preds)
 
             # Create a node for each argumentative unit in the batch
             for i, argumentative_unit in enumerate(argumentative_unit_batch):
@@ -80,3 +87,9 @@ class ArgumentGraphConstructor:
                 )
                 all_nodes.append(node)
                 all_nodes_by_type[classification].append(node)
+
+        for node_type in all_nodes_by_type.keys():
+            print(str(node_type))
+            for node in all_nodes_by_type[node_type]:
+                print(node.text)
+            print("")

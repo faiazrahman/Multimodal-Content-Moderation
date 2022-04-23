@@ -1,4 +1,7 @@
 """
+::DEPRECATED
+To run, move into argument_graphs/, then run from root
+
 :TEMPORARY
 RUN AUC JOBS (gpu:3) WITH PRE-SHUFFLE WHILE RTC IS ALSO RUNNING (gpu:2)
 DELETE AFTER RUN

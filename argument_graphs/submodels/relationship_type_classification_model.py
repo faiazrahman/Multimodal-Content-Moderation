@@ -73,7 +73,7 @@ class RelationshipTypeClassificationModel(pl.LightningModule):
     ```
     # Scripts which use this model should be run from root ./
     # Import this model in those scripts as follows
-    from argument_graphs.models import RelationshipTypeClassificationModel
+    from argument_graphs.submodels import RelationshipTypeClassificationModel
     ```
 
     Calling the model for inference

@@ -1,6 +1,11 @@
+"""
+Run (from root)
+python -m scripts.test_sentence_level_utterance_segmentation
+"""
+
 from pprint import pprint
 
-from argument_graphs.utils import UtteranceToArgumentativeUnitSegmenter
+from argument_graphs.modules import UtteranceToArgumentativeUnitSegmenter
 
 if __name__ == "__main__":
     segmenter = UtteranceToArgumentativeUnitSegmenter()

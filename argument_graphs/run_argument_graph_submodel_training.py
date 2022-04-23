@@ -48,7 +48,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
 
 from argument_graphs.dataloader import ArgumentativeUnitClassificationDataset,\
                                        RelationshipTypeClassificationDataset
-from argument_graphs.models import ArgumentativeUnitClassificationModel,\
+from argument_graphs.submodels import ArgumentativeUnitClassificationModel,\
                                    RelationshipTypeClassificationModel
 from models.callbacks import PrintCallback
 

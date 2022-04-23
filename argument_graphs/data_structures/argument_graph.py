@@ -184,7 +184,7 @@ class ArgumentGraph:
         -PREMISE: Citizens are upset
         """
 
-        TAB = "    "
+        TAB = " " * 4
 
         print(type(self))
         visited_nodes = set()

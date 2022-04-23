@@ -16,7 +16,7 @@ import time
 from transformers import AutoTokenizer
 
 from argument_graphs.dataloader import ArgumentativeUnitClassificationDataset
-from argument_graphs.models import ArgumentativeUnitClassificationModel
+from argument_graphs.submodels import ArgumentativeUnitClassificationModel
 from utils import get_checkpoint_filename_from_dir
 
 TRAINED_MODEL_VERSION = 114

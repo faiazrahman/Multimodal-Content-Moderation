@@ -91,6 +91,7 @@ if __name__ == "__main__":
     graph.print_graph()
 
     print(graph.has_cycle())
+    assert(graph.has_cycle() == False)
 
     # Should be true
     graph = ArgumentGraph()
@@ -180,3 +181,4 @@ if __name__ == "__main__":
     graph.print_graph()
 
     print(graph.has_cycle())
+    assert(graph.has_cycle() == True)

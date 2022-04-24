@@ -125,11 +125,84 @@ class ArgumentGraphConstructor:
                 graph.add_edge(edge)
 
         # Claim-to-claim entailment
-        # TODO: Design greedy selection process to avoid cycles
+        # Note that this process is slightly different than premise-to-claim
+        # entailment, since we need to avoid adding edges which would create a
+        # cycle; (Note that this was not possible in premise-to-claim
+        # entailment, since we always drew edges from a premise to a claim, so
+        # there was no possibility of a claim entailing a premise)
+
+        # 1. First, store all potential claim-to-claim edges
+        # This is a list of tuples of (potential_edge, entailment_score), where
+        # the entailment score is the probability from the RTC model
+        potential_claim_to_claim_edges = list() # type: List[Tuple[RelationshipTypeEdge, float]]
+        for source_claim in all_nodes_by_type[ArgumentativeUnitType.CLAIM]:
+            all_claims = all_nodes_by_type[ArgumentativeUnitType.CLAIM]
+            max_target_claim, max_probability = ArgumentGraphConstructor.source_to_targets_entailment(
+                source=source_claim,
+                targets=all_claims,
+                tokenizer=self.rtc_tokenizer,
+                rtc_model=self.rtc_model,
+                batch_size=self.rtc_model_batch_size
+            )
+
+            if max_probability:
+                edge = RelationshipTypeEdge(
+                    source_node=source_claim,
+                    target_node=max_target_claim,
+                    relation=RelationshipType.SUPPORTS
+                )
+                potential_claim_to_claim_edges.append(tuple([edge, max_probability]))
 
         # ::TESTING
+        print(potential_claim_to_claim_edges)
+        # ::END
+
+        # 2. Next, greedily add edges in order of decreasing entailment score
+        # only if it does not create a cycle in the graph
+        for edge, probability in sorted(
+            potential_claim_to_claim_edges,
+            key=lambda x: x[1], # Sort by probability (second value in tuple)
+            reverse=True
+        ):
+            # Try adding the edge, but if it causes a cycle, remove it
+            graph.add_edge(edge)
+            if graph.has_cycle():
+                # See docstring of `remove_edge_in_cycle()` in `ArgumentGraph`
+                # class for explanation of how the edge is removed for this
+                # specific case (i.e. an edge causing a cycle)
+                graph.remove_edge_in_cycle(edge)
+
+        # Root node linking
+        root = ArgumentativeUnitNode(classification=ArgumentativeUnitType.ROOT_NODE)
+        for claim in all_nodes_by_type[ArgumentativeUnitType.CLAIM]:
+            if graph.node_entails_no_edges(claim):
+                edge = RelationshipTypeEdge(
+                    source_node=claim,
+                    target_node=root,
+                    relation=RelationshipType.TO_ROOT
+                )
+                graph.add_edge(edge)
+
+        # Set the root node
+        graph.root = root
+
+        # Add leftover premises to the graph as children of the root
+        for premise in all_nodes_by_type[ArgumentativeUnitType.PREMISE]:
+            if premise not in set(graph.mapping.keys()):
+                edge = RelationshipTypeEdge(
+                    source_node=premise,
+                    target_node=root,
+                    relation=RelationshipType.TO_ROOT
+                )
+                graph.add_edge(edge)
+
+        # ::TESTING
+        graph.print_mapping()
+        print(f"has_cycle: {graph.has_cycle()}")
         graph.print_graph()
         # ::END
+
+        return graph
 
     @staticmethod
     def source_to_targets_entailment(

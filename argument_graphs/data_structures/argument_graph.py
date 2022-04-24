@@ -2,6 +2,7 @@ import itertools
 import functools
 import operator
 from collections import defaultdict, deque
+from re import L
 from typing import List, Dict, Set, Deque
 
 # from ..modules import ArgumentGraphLinearizer # Circular dependency
@@ -68,6 +69,31 @@ class ArgumentGraph:
         )
         self.reverse_mapping[reverse_edge.source_node].append(reverse_edge)
         return
+
+    def remove_edge_in_cycle(self, edge: RelationshipTypeEdge):
+        """
+        Removes an edge in a cycle (leaving nodes unaffected)
+
+        Note that the following always holds
+            Thm: If adding an edge to a graph creates a cycle, both its source
+            and target nodes are not new nodes to the graph (i.e., they were
+            already present in the connected graph before this edge was drawn)
+        - This is why we can only remove the edge and not worry about whether
+          we added a new node (and thus must remove it as well)
+        """
+        self.mapping[edge.source_node].remove(edge)
+
+        # Note that since the mappings store a list of Edge objects, we cannot
+        # create a new reverse edge and .remove() it, since that will have a
+        # different memory address (despite being the same logical reverse
+        # edge); thus, we search for the actual reverse edge object then remove
+        # it from the reverse mapping
+        reverse_edge_to_remove = None
+        for reverse_edge in self.reverse_mapping[edge.target_node]:
+            if reverse_edge.target_node == edge.source_node:
+                reverse_edge_to_remove = reverse_edge
+                break
+        self.reverse_mapping[edge.target_node].remove(reverse_edge_to_remove)
 
     def node_entails_no_edges(self, node: ArgumentativeUnitNode) -> bool:
         """ Returns True if node has no directed edges outward from itself """
@@ -217,6 +243,13 @@ class ArgumentGraph:
                 self._find_cycle(neighbor, color, found_cycle)
         color[node] = "black"
 
+    def print_mapping(self):
+        """ Prints the mapping to the terminal, for simple visuals """
+        for node in list(self.mapping.keys()):
+            print(f"{str(node.classification)}: {node.text}")
+            for edge in self.mapping[node]:
+                print(f"  {str(edge.target_node.classification)}: {edge.target_node.text}")
+
     def print_graph(self):
         """
         Prints the argument graph to the terminal, for simple visuals
@@ -261,4 +294,9 @@ class ArgumentGraph:
             child_claims.sort(key=lambda node: node.subtree_size, reverse=False)
             for claim in child_claims:
                 stack.append((claim, tabs + TAB))
+
+        root_child_premises = self.get_child_premise_nodes(self.root)
+        for child_premise in root_child_premises:
+            print(TAB + str(child_premise.classification) + ": " + child_premise.text)
+
         print("")

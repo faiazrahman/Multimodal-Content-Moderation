@@ -2,7 +2,6 @@ import itertools
 import functools
 import operator
 from collections import defaultdict, deque
-from re import L
 from typing import List, Dict, Set, Deque
 
 # from ..modules import ArgumentGraphLinearizer # Circular dependency

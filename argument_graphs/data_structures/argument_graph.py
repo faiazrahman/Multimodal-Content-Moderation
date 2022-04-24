@@ -2,9 +2,9 @@ import itertools
 import functools
 import operator
 from collections import defaultdict, deque
-from typing import List, Dict
+from typing import List, Dict, Set, Deque
 
-from ..modules import ArgumentGraphLinearizer
+# from ..modules import ArgumentGraphLinearizer # Circular dependency
 from .argumentative_unit_node import ArgumentativeUnitType, ArgumentativeUnitNode
 from .relationship_type_edge import RelationshipType, RelationshipTypeEdge
 
@@ -34,9 +34,9 @@ class ArgumentGraph:
         """ Representation of object """
         return f"ArgumentGraph({self.mapping}, {self.root})"
 
-    def __str__(self):
-        """ String casting of object """
-        return self.linearize()
+    # def __str__(self):
+    #     """ String casting of object """
+    #     return self.linearize()
 
     def add_node(self, node: ArgumentativeUnitNode):
         """ Adds node to argument graph """
@@ -73,10 +73,10 @@ class ArgumentGraph:
         """ Returns True if node has no directed edges outward from itself """
         return len(self.mapping[node]) == 0
 
-    def linearize(self) -> str:
-        """ Linearizes the argument graph into a single text string """
-        linearizer = ArgumentGraphLinearizer()
-        return linearizer.linearize(self)
+    # def linearize(self) -> str:
+    #     """ Linearizes the argument graph into a single text string """
+    #     linearizer = ArgumentGraphLinearizer()
+    #     return linearizer.linearize(self)
 
     @property
     def all_nodes(self) -> List[ArgumentativeUnitNode]:
@@ -167,6 +167,55 @@ class ArgumentGraph:
         for child_node in self.get_all_child_nodes(curr_node):
             self._compute_child_subtree_sizes(child_node)
             curr_node.subtree_size += child_node.subtree_size
+
+    def has_cycle(self) -> bool:
+        """
+        Returns true if the graph contains a cycle; false if not
+
+        Runs depth-first search, keeping track of visited nodes and marking
+        nodes with colors (see CLRS text on algorithms)
+
+        Uses colors to mark vertices
+            white   Not visited
+            grey    Visited, but all vertices reachable from this vertex have
+                    not yet been visited
+            black   Finished, i.e. this vertex and all vertices reachable from
+                    it have been visited
+        """
+        color = { node: "white" for node in list(self.mapping.keys()) }
+        # We will store whether or not we found a cycle as a list of a single
+        # element (so that its value can be changed via call by reference in
+        # the recursive calls)
+        found_cycle = [False]
+
+        for node in list(self.mapping.keys()):
+            if color[node] == "white":
+                self._find_cycle(node, color, found_cycle)
+            if found_cycle[0] == True:
+                break
+
+        if found_cycle[0] == True:
+            return True
+        else:
+            return False
+
+    def _find_cycle(
+        self,
+        node: ArgumentativeUnitNode,
+        color: Dict[ArgumentativeUnitNode, str],
+        found_cycle: List[bool]
+    ):
+        """ Recursive helper for finding cycles in graph """
+        if found_cycle[0] == True:
+            return
+        color[node] = "grey"
+        for neighbor in [edge.target_node for edge in self.mapping[node]]:
+            if color[neighbor] == "grey":
+                found_cycle[0] = True
+                return
+            if color[neighbor] == "white":
+                self._find_cycle(neighbor, color, found_cycle)
+        color[node] = "black"
 
     def print_graph(self):
         """

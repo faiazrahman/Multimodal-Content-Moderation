@@ -49,7 +49,7 @@ class ArgSum:
 
         self.text_summarizer = None
         if fine_tuned_for_dialogue:
-            # TODO: # We should have a DialogueSummarizationModel class that
+            # TODO: We should have a DialogueSummarizationModel class that
             # can be fine-tuned on SamSum conversation data
             raise NotImplementedError("Need to implement DialogueSummarizationModel")
         else:

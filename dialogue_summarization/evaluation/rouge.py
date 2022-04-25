@@ -1,6 +1,9 @@
 from rouge_metric import PyRouge
 
 if __name__ == "__main__":
+    # This is an example from the rouge-metric PyPI docs
+    # https://pypi.org/project/rouge-metric/
+
     # Load summary results
     hypotheses = [
         'how are you\ni am fine',  # document 1: hypothesis

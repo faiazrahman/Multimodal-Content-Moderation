@@ -63,7 +63,7 @@ class ArgSum:
         else:
             # Load Hugging Face `transformers` summarization pipeline using the
             # specified base model
-            self.text_summarizer = transformers.pipline(
+            self.text_summarizer = transformers.pipeline(
                 "summarization",
                 model=summarization_transformers_model_name
             )
@@ -85,6 +85,7 @@ class ArgSum:
         if self.fine_tuned_for_dialogue:
             # TODO: Tokenize the linearized_graph using self.tokenizer and
             # encode_single_inputs() (from argument_graphs.utils)
+            # TODO: Look into how BART generates tensors with its tokenizer
             encoded_inputs = encode_single_inputs(linearized_graph)
             summary = None
             raise NotImplementedError("Need to implement DialogueSummarizationModel")

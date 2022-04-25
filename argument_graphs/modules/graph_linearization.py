@@ -1,12 +1,21 @@
 from collections import deque
 from typing import List
 
+from argument_graphs.data_structures import ArgumentGraph, ArgumentativeUnitNode
+
 class ArgumentGraphLinearizer:
 
-    def __init__(self, linearization_method: str = "greedy-heuristics"):
+    def __init__(
+        self,
+        linearization_method: str = "greedy-heuristics"
+    ):
         self.linearization_method = linearization_method
 
-    def linearize(self, graph: 'ArgumentGraph', separator: str = "\n") -> str:
+    def linearize(
+        self,
+        graph: ArgumentGraph,
+        separator: str = "\n"
+    ) -> str:
         """
         Runs graph linearization algorithm, returning a linearized text string
         """
@@ -20,7 +29,7 @@ class ArgumentGraphLinearizer:
 
     def run_top_down_greedy_heuristics_linearization(
         self,
-        graph: 'ArgumentGraph',
+        graph: ArgumentGraph,
         separator: str = "\n"
     ) -> str:
         """

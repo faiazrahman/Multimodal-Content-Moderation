@@ -1,10 +1,13 @@
 import logging
 from typing import List, Tuple
 
-from transformers import AutoModel
+import transformers
+from transformers import AutoTokenizer
 
 from argument_graphs.modules import ArgumentGraphConstructor, \
     ArgumentGraphLinearizer
+from argument_graphs.data_structures import ArgumentGraph
+from argument_graphs.utils import encode_single_inputs
 
 logging.basicConfig(level=logging.INFO)
 
@@ -31,6 +34,7 @@ class ArgSum:
         # For linearized text summarization with fine-tuning (DialogueSumm)
         # Note that `fine_tuned_for_dialogue` must be true to use fine-tuned model
         fine_tuned_for_dialogue: bool = False,
+        dialogue_summarization_tokenizer_model_name: str = "facebook/bart-large-cnn",
         dialogue_summarization_model_version: int = None
     ):
         self.graph_constructor = ArgumentGraphConstructor(
@@ -47,18 +51,24 @@ class ArgSum:
             linearization_method=linearization_method
         )
 
+        self.fine_tuned_for_dialogue = fine_tuned_for_dialogue
+        self.tokenizer = None # If using fine-tuned DialogueSummarizationModel
         self.text_summarizer = None
         if fine_tuned_for_dialogue:
+            self.tokenizer = AutoTokenizer.from_pretrained(dialogue_summarization_tokenizer_model_name)
             # TODO: We should have a DialogueSummarizationModel class that
             # can be fine-tuned on SamSum conversation data
+            self.text_summarizer = None
             raise NotImplementedError("Need to implement DialogueSummarizationModel")
         else:
-            # Load a base model from Hugging Face `transformers`
-            self.text_summarizer = AutoModel.from_pretrained(
-                summarization_transformers_model_name
+            # Load Hugging Face `transformers` summarization pipeline using the
+            # specified base model
+            self.text_summarizer = transformers.pipline(
+                "summarization",
+                model=summarization_transformers_model_name
             )
 
-    def summarize(dialogue_utterances: List[str]) -> str:
+    def summarize(self, dialogue_utterances: List[str]) -> str:
         """
         Summarizes the given list of dialogue utterances (strings) using the
         ArgSum algorithm
@@ -68,4 +78,33 @@ class ArgSum:
         trained submodel versions, the segmentation method, the linearization
         method, etc.)
         """
-        raise NotImplementedError("ArgSum.summarize()")
+        graph: ArgumentGraph = self.graph_constructor.construct_graph(dialogue_utterances)
+        linearized_graph: str = self.graph_linearizer.linearize(graph)
+
+        summary = "none"
+        if self.fine_tuned_for_dialogue:
+            # TODO: Tokenize the linearized_graph using self.tokenizer and
+            # encode_single_inputs() (from argument_graphs.utils)
+            encoded_inputs = encode_single_inputs(linearized_graph)
+            summary = None
+            raise NotImplementedError("Need to implement DialogueSummarizationModel")
+        else:
+            # Using summarization pipeline without fine-tuning on dialogue
+            # Note: We define the summary's max_length as max(min(75, num_words // 2), 5)
+            # Note that num_words is calculated very roughly, splitting on whitespace
+            num_words = len(linearized_graph.split())
+            max_length = min(75, num_words // 2) # For short comment threads, it'll be <75
+            max_length = max(max_length, 5) # Avoid 1-length maxes, which leads to unexpected behavior
+            min_length = min(5, max_length - 1)
+            summary = self.text_summarizer(
+                linearized_graph,
+                min_length=min_length,
+                max_length=max_length,
+                truncation=True
+            )
+
+            # Pipeline returns a list containing a dict
+            # https://huggingface.co/docs/transformers/master/en/main_classes/pipelines
+            summary = summary[0]['summary_text']
+
+        return summary

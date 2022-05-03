@@ -201,15 +201,26 @@ class MultimodalDataset(Dataset):
             text = self.data_frame.loc[idx, 'clean_title']
             text = self.text_embedder.encode(text, convert_to_tensor=True)
             item["text"] = text
+
         if Modality(self.modality) in [Modality.IMAGE, Modality.TEXT_IMAGE, \
                                        Modality.TEXT_IMAGE_DIALOGUE]:
             image_path = os.path.join(IMAGES_DIR, item_id + IMAGE_EXTENSION)
             image = Image.open(image_path).convert("RGB")
             image = self.image_transform(image)
             item["image"] = image
-        # TODO: GET THE RIGHT DIALOGUE COLUMN (RANKSUM, GRAPHLIN, OR ARGSUM)
+
         if Modality(self.modality) == Modality.TEXT_IMAGE_DIALOGUE:
-            dialogue = self.data_frame.loc[idx, 'comment_summary']
+            # Get the correct dialogue representation (i.e. RankSum, GraphLin,
+            # or ArgSum)
+            dialogue = None
+            if self.dialogue_method == "ranksum":
+                dialogue = self.data_frame.loc[idx, 'comment_summary']
+            elif self.dialogue_method == "graphlin":
+                dialogue = self.data_frame.loc[idx, 'dialogue_linearized_graph']
+            elif self.dialogue_method == "argsum":
+                dialogue = self.data_frame.loc[idx, 'dialogue_argsum_summary']
+
+            # Generate an embedding for the dialogue representation
             dialogue = self.text_embedder.encode(dialogue, convert_to_tensor=True)
             item["dialogue"] = dialogue
 

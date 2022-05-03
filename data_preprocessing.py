@@ -1,3 +1,7 @@
+"""
+python data_preprocessing.py --test --from_dialogue_dataframe data/Fakeddit/test__dialogue_dataframe.pkl --dialogue_method graphlin --modality text-image-dialogue
+"""
+
 import sys
 import os
 from pathlib import Path

@@ -53,8 +53,8 @@ class MultimodalDataset(Dataset):
 
     def __init__(
         self,
-        from_preprocessed_dataframe=None, # Preprocessed dataframe to load from
-        from_dialogue_dataframe=None, # Dataframe containing only filtered dialogue data
+        from_preprocessed_dataframe=None, # Path to preprocessed dataframe to load from (or the actual pd.DataFrame)
+        from_dialogue_dataframe=None, # Path to dataframe containing only filtered dialogue data
         data_path=None, # Path to data (i.e. not using preprocessed dataframe)
         dir_to_save_dataframe="data/Fakeddit", # Save the preprocessed dataframe here
         prefix_for_all_generated_pkl_files="", # Adds a prefix to all .pkl files that are saved
@@ -131,7 +131,7 @@ class MultimodalDataset(Dataset):
                 else:
                     self._preprocess_dialogue()
 
-            # TODO: Save final dataframe --- UPDATE: This is done in _preprocess_dialogue()
+            # NOTE: The final dataframe is saved in _preprocess_dialogue()
 
         else: # from_preprocessed_dataframe:
             print("Running data preprocessing from preprocessed dataframe...")
@@ -362,10 +362,11 @@ class MultimodalDataset(Dataset):
             final_df_filename = self.prefix_for_all_generated_pkl_files + "_" + final_df_filename
         final_df_save_path = os.path.join(self.dir_to_save_dataframe, final_df_filename)
 
+        # Setup the dialogue dataframe (referred to as `df`)
+        df = None
         if from_saved_dialogue_df_path != "":
             # Special Case (see above comment in __init__)
             df = pd.read_pickle(from_saved_dialogue_df_path)
-            generate_summaries_and_save_df(df, save_path=final_df_save_path)
         else:
             df = pd.read_csv(DIALOGUE_DATA_FILE, sep='\t')
             logging.debug(df)
@@ -404,15 +405,15 @@ class MultimodalDataset(Dataset):
             df.to_pickle(dialogue_df_save_path)
             logging.info("Filtered dialogue dataframe saved to {}".format(dialogue_df_save_path))
 
-            # Save the final main dataframe (with text, image, and dialogue
-            # data with dialogue summaries); note that its filename is different
-            # Filename will look something like "train__text_image_dialogue__dataframe.pkl"
-            if self.dialogue_method == "ranksum":
-                generate_summaries_and_save_df(df, save_path=final_df_save_path)
-            elif self.dialogue_method == "graphlin":
-                self.run_graphlin_and_save_df(df, save_path=final_df_save_path)
-            elif self.dialogue_method == "argsum":
-                self.run_argsum_and_save_df(df, save_path=final_df_save_path)
+        # Save the final main dataframe (with text, image, and dialogue
+        # data with dialogue summaries); note that its filename is different
+        # Filename will look something like "train__text_image_dialogue__dataframe.pkl"
+        if self.dialogue_method == "ranksum":
+            generate_summaries_and_save_df(df, save_path=final_df_save_path)
+        elif self.dialogue_method == "graphlin":
+            self.run_graphlin_and_save_df(df, save_path=final_df_save_path)
+        elif self.dialogue_method == "argsum":
+            self.run_argsum_and_save_df(df, save_path=final_df_save_path)
 
     def run_graphlin_and_save_df(self, df, save_path="data/Fakeddit"):
         """
@@ -481,5 +482,58 @@ class MultimodalDataset(Dataset):
         linearization via GraphLin, text summarization via Transformers)
 
         Saves to the "dialogue_argsum_summary" column of the dataframe
+
+        Params
+            df: Dataframe made from dialogue data file
+            save_path: Path to save final dataframe
         """
-        pass
+        logging.info("Generating summaries via ArgSum for current dataset...")
+
+        # Add new column in main dataframe to hold dialogue linearized argument graphs
+        self.data_frame['dialogue_argsum_summary'] = ""
+
+        # Setup ArgSum instance
+        # TODO: MAKE THE MODEL VERSIONS AND TOKENIZER MODEL NAMES ARGS
+        argsum = ArgSum(
+            auc_trained_model_version=209,
+            rtc_trained_model_version=264,
+            auc_tokenizer_model_name="bert-base-uncased",
+            rtc_tokenizer_model_name="bert-base-uncased"
+        )
+
+        failed_ids = []
+        for iteration, text_id in enumerate(self.text_ids):
+            if (iteration % 250 == 0):
+                print("Generating summaries via ArgSum for item {}...".format(iteration))
+                # Save progress so far
+                self.data_frame.to_pickle(save_path)
+
+            try:
+                # Group comments by post id
+                all_comments = df[df['submission_id'] == text_id]
+                all_comments.sort_values(by=['ups'], ascending=False)
+                all_comments = list(all_comments['body'])
+
+                # Generate summary via full ArgSum algorithm (i.e. graph
+                # construction, graph linearization via GraphLin, text
+                # summarization via Transformers)
+                summary: str = argsum.summarize(all_comments)
+
+                # Add to self.data_frame 'dialogue_linearized_graph' column
+                self.data_frame.loc[self.data_frame['id'] == text_id, 'dialogue_argsum_summary'] = summary
+            except:
+                failed_ids.append(text_id)
+
+        # Save final main dataframe
+        self.data_frame.to_pickle(save_path)
+        print("Preprocessed final dataframe (with dialogue summaries via ArgSum) saved to {}".format(save_path))
+        logging.info("Preprocessed final dataframe (with dialogue summaries via ArgSum) saved to {}".format(save_path))
+
+        logging.debug(self.data_frame)
+        logging.debug(self.data_frame['dialogue_argsum_summary'])
+        logging.debug("num_failed: " + str(len(failed_ids)))
+        logging.debug(failed_ids)
+        print("Preprocessed final dataframe (with dialogue summaries via ArgSum) saved to {}".format(save_path))
+        logging.info("Preprocessed final dataframe (with dialogue summaries via ArgSum) saved to {}".format(save_path))
+
+        return

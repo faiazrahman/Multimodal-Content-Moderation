@@ -11,6 +11,11 @@ Notes
 - We have to pass a user agent to `wget`, otherwise it fails with 403 Forbidden
   error (likely because the site thinks that a bot, etc. is trying to access
   the data)
+- If your Linux distribution does not have the 7za command, you can install it;
+  if that fails, you can directly download the data from the link
+  https://arxiv.org/src/1911.12237v2/anc/corpus.7z
+  and move the `train.json`, `test.json`, and `val.json` files manually into
+  this directory
 
 ## Dataset
 The SAMSum dataset contains about 16k messenger-like conversations with summaries. Conversations were created and written down by linguists fluent in English. Linguists were asked to create conversations similar to those they write on a daily basis, reflecting the proportion of topics of their real-life messenger convesations. The style and register are diversified - conversations could be informal, semi-formal or formal, they may contain slang words, emoticons and typos. Then, the conversations were annotated with summaries. It was assumed that summaries should be a concise brief of what people talked about in the conversation in third person.

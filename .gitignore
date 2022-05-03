@@ -33,6 +33,11 @@ data/MNLI/*
 !data/MNLI/download_data.sh
 !data/MNLI/README.txt
 
+!data/SAMSum
+data/SAMSum/*
+!data/SAMSum/download_data.sh
+!data/SAMSum/README.txt
+
 lightning_logs/*
 !lightning_logs/log.log
 

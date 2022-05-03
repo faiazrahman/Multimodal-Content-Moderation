@@ -1,5 +1,5 @@
 Run the `download_data.sh` shell script to download the data from its URL and unzip it.
-When it asks "Would you like to replace the existing file: ...", type in N (for no)
+When it asks "Would you like to replace the existing file: ...", type in N (for no).
 
 ```
 bash download_data.sh

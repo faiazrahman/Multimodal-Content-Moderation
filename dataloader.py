@@ -207,6 +207,7 @@ class MultimodalDataset(Dataset):
             image = Image.open(image_path).convert("RGB")
             image = self.image_transform(image)
             item["image"] = image
+        # TODO: GET THE RIGHT DIALOGUE COLUMN (RANKSUM, GRAPHLIN, OR ARGSUM)
         if Modality(self.modality) == Modality.TEXT_IMAGE_DIALOGUE:
             dialogue = self.data_frame.loc[idx, 'comment_summary']
             dialogue = self.text_embedder.encode(dialogue, convert_to_tensor=True)

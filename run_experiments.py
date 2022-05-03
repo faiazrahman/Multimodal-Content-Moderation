@@ -3,6 +3,7 @@ import sys
 import subprocess
 from datetime import datetime
 
+GPU_ID = 2  # Can specify multiple as a comma-separated string, e.g. "0,1"
 LOGS_DIR = "logs"
 
 def run(command: str):
@@ -32,13 +33,11 @@ def run(command: str):
     subprocess.call(command + f" > {log_filepath}", shell=True)
     print(command + "\nCompleted!")
 
-if __name__ == "__main__":
-
-    # subprocess.call("python run_training.py --config configs/sampled_text_image_dialogue__2_class__mpnet_resnet_bart.yaml", shell=True)
-    # run("python run_training.py --only_check_args --config configs/sampled_text_image_dialogue__2_class__mpnet_resnet_bart.yaml")
-
+def train_roberta_mpnet_resnet_bart_ranksum():
+    run("python run_training.py --config configs/text_image__2_class__mpnet_resnet.yaml")
     run("python run_training.py --config configs/text_image__3_class__mpnet_resnet.yaml")
     run("python run_training.py --config configs/text_image__6_class__mpnet_resnet.yaml")
+    run("python run_training.py --config configs/text_image_dialogue__2_class__mpnet_resnet_bart.yaml")
     run("python run_training.py --config configs/text_image_dialogue__3_class__mpnet_resnet_bart.yaml")
     run("python run_training.py --config configs/text_image_dialogue__6_class__mpnet_resnet_bart.yaml")
     run("python run_training.py --config configs/text_image__2_class__roberta_resnet.yaml")
@@ -47,3 +46,21 @@ if __name__ == "__main__":
     run("python run_training.py --config configs/text_image_dialogue__2_class__roberta_resnet_bart.yaml")
     run("python run_training.py --config configs/text_image_dialogue__3_class__roberta_resnet_bart.yaml")
     run("python run_training.py --config configs/text_image_dialogue__6_class__roberta_resnet_bart.yaml")
+
+def train_graphlin_mpnet_resnet_bart():
+    run(f"python run_training.py --config configs/graphlin__text_image_dialogue__2_class__mpnet_resnet_bart.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/graphlin__text_image_dialogue__3_class__mpnet_resnet_bart.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/graphlin__text_image_dialogue__6_class__mpnet_resnet_bart.yaml --gpus {GPU_ID}")
+
+def train_argsum_mpnet_resnet_bart():
+    run(f"python run_training.py --config configs/argsum__text_image_dialogue__2_class__mpnet_resnet_bart.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/argsum__text_image_dialogue__3_class__mpnet_resnet_bart.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/argsum__text_image_dialogue__6_class__mpnet_resnet_bart.yaml --gpus {GPU_ID}")
+
+if __name__ == "__main__":
+
+    # subprocess.call("python run_training.py --config configs/sampled_text_image_dialogue__2_class__mpnet_resnet_bart.yaml", shell=True)
+    # run("python run_training.py --only_check_args --config configs/sampled_text_image_dialogue__2_class__mpnet_resnet_bart.yaml")
+
+    train_graphlin_mpnet_resnet_bart()
+    train_argsum_mpnet_resnet_bart()

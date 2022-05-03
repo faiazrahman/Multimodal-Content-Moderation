@@ -46,46 +46,78 @@ if __name__ == "__main__":
     parser.add_argument("--only_check_args", action="store_true", help="(Only for testing) Stops script after printing out args; doesn't actually run")
     parser.add_argument("--config", type=str, default="", help="config.yaml file with experiment configuration")
 
+    parser.add_argument("--trained_model_version", type=int, default=None)
     parser.add_argument("--batch_size", type=int, default=None)
     parser.add_argument("--gpus", type=str, help="Comma-separated list of ints with no spaces; e.g. \"0\" or \"0,1\"")
     parser.add_argument("--num_cpus", type=int, default=None, help="0 for no multi-processing, 24 on Yale Tangra server, 40 on Yale Ziva server")
     args = parser.parse_args()
 
+    # NOTE: We allow passing just a trained model version number, since we can
+    # get the hyperparameters from its `lightning_logs/version_*/hparams.yaml` file
     config = {}
     if args.config is not "":
         with open(str(args.config), "r") as yaml_file:
             config = yaml.safe_load(yaml_file)
     else:
-        raise Exception("You must pass a config filename to --config to run evaluation; this must match the experiment configuration used for training the model")
+        if not args.trained_model_version:
+            raise Exception("You must either pass a config filename to --config (which must match the experiment configuration used for training the model) OR pass a --trained_model_version to run evaluation")
 
+    if not args.batch_size: args.batch_size = config.get("batch_size", 32)
     if args.gpus:
         args.gpus = [int(gpu_num) for gpu_num in args.gpus.split(",")]
     else:
         args.gpus = config.get("gpus", DEFAULT_GPUS)
     if not args.num_cpus: args.num_cpus = config.get("num_cpus", DEFAULT_NUM_CPUS)
 
-    args.model = config.get("model", "text_image_resnet_model")
-    args.modality = config.get("modality", "text-image")
-    args.num_classes = config.get("num_classes", 2)
-    if not args.batch_size: args.batch_size = config.get("batch_size", 32)
-    args.learning_rate = config.get("learning_rate", 1e-4)
-    args.num_epochs = config.get("num_epochs", 10)
-    args.dropout_p = config.get("dropout_p", 0.1)
-    args.fusion_output_size = config.get("fusion_output_size", 512)
-    args.text_embedder = config.get("text_embedder", "all-mpnet-base-v2")
-    args.image_encoder = config.get("image_encoder", "resnet")
-    args.dialogue_summarization_model = config.get("dialogue_summarization_model", "bart-large-cnn")
+    original_batch_size = None
+    if args.trained_model_version:
+        # User specified a trained model version as a command-line arg
+        # Get the hyperparameters from its trained model assets folder's hparams.yaml
+        trained_model_assets_hparams_filepath = os.path.join(
+            "lightning_logs",
+            "version_" + str(args.trained_model_version),
+            "hparams.yaml")
+        hparams_config = {}
+        with open(trained_model_assets_hparams_filepath, "r") as yaml_file:
+            hparams_config = yaml.safe_load(yaml_file)
+        args.model = hparams_config.get("model", None)
+        args.modality = hparams_config.get("modality", None)
+        args.num_classes = hparams_config.get("num_classes", None)
+        original_batch_size = hparams_config.get("batch_size", None)
+        args.learning_rate = hparams_config.get("learning_rate", None)
+        args.num_epochs = hparams_config.get("num_epochs", None)
+        args.dropout_p = hparams_config.get("dropout_p", None)
+        args.fusion_output_size = hparams_config.get("fusion_output_size", None)
+        args.text_embedder = hparams_config.get("text_embedder", None)
+        args.image_encoder = hparams_config.get("image_encoder", None)
+        args.dialogue_summarization_model = hparams_config.get("dialogue_summarization_model", None)
+        args.test_data_path = hparams_config.get("test_data_path", None)
+        args.preprocessed_test_dataframe_path = hparams_config.get("preprocessed_test_dataframe_path", None)
+    else:
+        # Otherwise, load the hparams from the specified config file
+        args.model = config.get("model", "text_image_resnet_model")
+        args.modality = config.get("modality", "text-image")
+        args.num_classes = config.get("num_classes", 2)
+        args.batch_size = config.get("batch_size", 32)
+        original_batch_size = args.batch_size
+        args.learning_rate = config.get("learning_rate", 1e-4)
+        args.num_epochs = config.get("num_epochs", 10)
+        args.dropout_p = config.get("dropout_p", 0.1)
+        args.fusion_output_size = config.get("fusion_output_size", 512)
+        args.text_embedder = config.get("text_embedder", "all-mpnet-base-v2")
+        args.image_encoder = config.get("image_encoder", "resnet")
+        args.dialogue_summarization_model = config.get("dialogue_summarization_model", "bart-large-cnn")
 
-    args.trained_model_version = config.get("trained_model_version", None)
-    args.trained_model_path = config.get("trained_model_path", None)
-    args.test_data_path = config.get("test_data_path", os.path.join(DATA_PATH, "multimodal_test_" + str(TEST_DATA_SIZE) + ".tsv"))
-    args.preprocessed_test_dataframe_path = config.get("preprocessed_test_dataframe_path", None)
+        args.trained_model_version = config.get("trained_model_version", None)
+        args.trained_model_path = config.get("trained_model_path", None)
+        args.test_data_path = config.get("test_data_path", os.path.join(DATA_PATH, "multimodal_test_" + str(TEST_DATA_SIZE) + ".tsv"))
+        args.preprocessed_test_dataframe_path = config.get("preprocessed_test_dataframe_path", None)
 
-    print("Running evaluation for a model with the following configuration...")
+    print(f"Running evaluation with batch_size={args.batch_size} for a model with the following configuration...")
     print(f"model: {args.model}")
     print(f"modality: {args.modality}")
     print(f"num_classes: {args.num_classes}")
-    print(f"batch_size: {args.batch_size}")
+    print(f"batch_size: {original_batch_size}")
     print(f"learning_rate: {args.learning_rate}")
     print(f"num_epochs: {args.num_epochs}")
     print(f"dropout_p: {args.dropout_p}")

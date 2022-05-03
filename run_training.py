@@ -69,6 +69,8 @@ if __name__ == "__main__":
     parser.add_argument("--dialogue_summarization_model", type=str, default=None, help="(Does NOT use in-house dialogue summarization) None=Transformers.Pipeline default i.e. sshleifer/distilbart-cnn-12-6 | bart-large-cnn | t5-small | t5-base | t5-large")
     parser.add_argument("--train_data_path", type=str, default=None)
     parser.add_argument("--preprocessed_train_dataframe_path", type=str, default=None)
+    parser.add_argument("--test_data_path", type=str, default=None)
+    parser.add_argument("--preprocessed_test_dataframe_path", type=str, default=None)
     args = parser.parse_args()
 
     config = {}
@@ -100,6 +102,10 @@ if __name__ == "__main__":
         args.train_data_path = config.get("train_data_path", os.path.join(DATA_PATH, "multimodal_train_" + str(TRAIN_DATA_SIZE) + ".tsv"))
     if not args.preprocessed_train_dataframe_path:
         args.preprocessed_train_dataframe_path = config.get("preprocessed_train_dataframe_path", None)
+    if not args.test_data_path:
+        args.test_data_path = config.get("test_data_path", os.path.join(DATA_PATH, "multimodal_test_" + str(TEST_DATA_SIZE) + ".tsv"))
+    if not args.preprocessed_test_dataframe_path:
+        args.preprocessed_test_dataframe_path = config.get("preprocessed_test_dataframe_path", None)
 
     print("Running training with the following configuration...")
     print(f"model: {args.model}")
@@ -117,6 +123,8 @@ if __name__ == "__main__":
     print(f"dialogue_summarization_model: {args.dialogue_summarization_model}")
     print(f"train_data_path: {args.train_data_path}")
     print(f"preprocessed_train_dataframe_path: {args.preprocessed_train_dataframe_path}")
+    print(f"test_data_path: {args.test_data_path}")
+    print(f"preprocessed_test_dataframe_path: {args.preprocessed_test_dataframe_path}")
 
     if args.only_check_args:
         quit()
@@ -132,7 +140,7 @@ if __name__ == "__main__":
         "fusion_output_size": args.fusion_output_size,
 
         # For logging
-        "model_name": args.model,
+        "model": args.model,
         "modality": args.modality,
         "batch_size": args.batch_size,
         "num_epochs": args.num_epochs,
@@ -141,6 +149,8 @@ if __name__ == "__main__":
         "dialogue_summarization_model": args.dialogue_summarization_model,
         "train_data_path": args.train_data_path,
         "preprocessed_train_dataframe_path": args.preprocessed_train_dataframe_path,
+        "test_data_path": args.test_data_path,
+        "preprocessed_test_dataframe_path": args.preprocessed_test_dataframe_path,
     }
 
     model = None

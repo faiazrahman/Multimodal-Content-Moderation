@@ -59,10 +59,13 @@ class SequenceClassificationModel(nn.Module):
     def forward(self, encoded_text, label=None):
         output = self.model(**encoded_text, labels=label)
         logits, loss = output.logits, output.loss
-        # TODO: Convert the logits to a probability via softmax and return the
-        # probability tensor as well, since we use this as the entailment score
         pred = torch.argmax(logits, dim=1)
-        return (pred, loss)
+
+        # Convert the logits to probabilities via softmax and return the
+        # probability tensor as well, since we use this as the entailment score
+        probabilities = torch.nn.functional.softmax(logits, dim=1)
+
+        return (pred, probabilities, loss)
 
 class RelationshipTypeClassificationModel(pl.LightningModule):
     """
@@ -117,7 +120,7 @@ class RelationshipTypeClassificationModel(pl.LightningModule):
         # accompanying loss for training, independent of forward()
         text, label = batch["text"], batch["label"]
 
-        pred, loss = self.model(text, label)
+        pred, probabilities, loss = self.model(text, label)
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         print(loss.item())
         losses.append(loss.item())
@@ -126,7 +129,7 @@ class RelationshipTypeClassificationModel(pl.LightningModule):
     # Optional for pl.LightningModule
     def validation_step(self, batch, batch_idx):
         text, label = batch["text"], batch["label"]
-        pred, loss = self.model(text, label)
+        pred, probabilities, loss = self.model(text, label)
         self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         self.accuracy(pred, label)
         self.log("val_acc", self.accuracy, on_step=True, on_epoch=True, prog_bar=True, logger=True)
@@ -140,7 +143,7 @@ class RelationshipTypeClassificationModel(pl.LightningModule):
     # Optional for pl.LightningModule
     def test_step(self, batch, batch_idx):
         text, label = batch["text"], batch["label"]
-        pred, loss = self.model(text, label)
+        pred, probabilities, loss = self.model(text, label)
         accuracy = torch.sum(pred == label).item() / (len(label) * 1.0)
         output = {
             'test_loss': loss,

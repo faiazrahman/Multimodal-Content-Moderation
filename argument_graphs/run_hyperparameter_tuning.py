@@ -49,8 +49,14 @@ def hyperparameter_tuning_rtc():
         print(f"optimizer: {opt}, learning_rate: {lr}")
         run(f"python -m argument_graphs.run_argument_graph_submodel_training --relationship_type_classification --config configs/relationship_type_classification/rtc__roberta-base.yaml --batch_size 32 --num_epochs 2 --optimizer {opt} --learning_rate {lr} --gpus {GPU_ID}")
 
+def run_best_rtc():
+    opt = "adam"
+    lr = 3e-5
+    run(f"python -m argument_graphs.run_argument_graph_submodel_training --relationship_type_classification --config configs/relationship_type_classification/rtc__bert-base-uncased.yaml --batch_size 32 --num_epochs 2 --optimizer {opt} --learning_rate {lr} --gpus {GPU_ID}")
+
 if __name__ == "__main__":
 
     # hyperparameter_tuning_auc()
+    # hyperparameter_tuning_rtc()
 
-    hyperparameter_tuning_rtc()
+    run_best_rtc()

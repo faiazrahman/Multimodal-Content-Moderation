@@ -9,7 +9,7 @@ import itertools
 
 from run_experiments import run
 
-GPU_ID = 3
+GPU_ID = 2
 
 def evaluation_auc():
     # Hyperparameter tuning for AUC created models 145 to 172, inclusive
@@ -54,12 +54,14 @@ def evaluation_rtc():
         # 243, # bert, adam, 1e-4
         # 263, # bert, adam, 5e-5
         # 264, # bert, adam, 3e-5
-        267, # bert, adam, 1e-5
-        269, # bert, sgd, 1e-3
-        270, # bert, sgd, 5e-4
-        271, # bert, sgd, 3e-4
-        272, # bert, sgd, 1e-4
-        273, # bert, sgd, 5e-5
+        # 267, # bert, adam, 1e-5
+        # 269, # bert, sgd, 1e-3
+        # 270, # bert, sgd, 5e-4
+        # 271, # bert, sgd, 3e-4
+        # 272, # bert, sgd, 1e-4
+        # 273, # bert, sgd, 5e-5
+        274, # bert, sgd, 3e-5
+        281, # bert, sgd, 1e-5
     ]
     for version_number in bert_model_version_numbers:
         print(f"Evaluating model version_{version_number}")

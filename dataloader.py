@@ -16,6 +16,8 @@ from torch.utils.data import Dataset, DataLoader
 
 import transformers
 
+from argument_graphs.argsum import ArgSum
+
 logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 DATA_PATH = "./data/Fakeddit"
@@ -412,16 +414,68 @@ class MultimodalDataset(Dataset):
             elif self.dialogue_method == "argsum":
                 self.run_argsum_and_save_df(df, save_path=final_df_save_path)
 
-    def run_graphlin_and_save_df(self, dialogue_df, save_path="data/Fakeddit"):
+    def run_graphlin_and_save_df(self, df, save_path="data/Fakeddit"):
         """
         Runs ArgSum until the GraphLin step (i.e. constructs an argument graph
         and linearizes it, but does not summarize it)
 
         Saves to the "dialogue_linearized_graph" column of the dataframe
-        """
-        pass
 
-    def run_argsum_and_save_df(self, dialogue_df, save_path="data/Fakeddit"):
+        Params
+            df: Dataframe made from dialogue data file
+            save_path: Path to save final dataframe
+        """
+        logging.info("Generating linearized argument graphs via ArgSum's GraphLin for current dataset...")
+
+        # Add new column in main dataframe to hold dialogue linearized argument graphs
+        self.data_frame['dialogue_linearized_graph'] = ""
+
+        # Setup ArgSum instance
+        # TODO: MAKE THE MODEL VERSIONS AND TOKENIZER MODEL NAMES ARGS
+        argsum = ArgSum(
+            auc_trained_model_version=209,
+            rtc_trained_model_version=264,
+            auc_tokenizer_model_name="bert-base-uncased",
+            rtc_tokenizer_model_name="bert-base-uncased"
+        )
+
+        failed_ids = []
+        for iteration, text_id in enumerate(self.text_ids):
+            if (iteration % 250 == 0):
+                print("Generating linearized argument graphs for item {}...".format(iteration))
+                # Save progress so far
+                self.data_frame.to_pickle(save_path)
+
+            try:
+                # Group comments by post id
+                all_comments = df[df['submission_id'] == text_id]
+                all_comments.sort_values(by=['ups'], ascending=False)
+                all_comments = list(all_comments['body'])
+
+                # Generate linearized argument graph (i.e. run ArgSum, but stop
+                # at GraphLin step)
+                linearized_graph: str = argsum.construct_and_linearize(all_comments)
+
+                # Add to self.data_frame 'dialogue_linearized_graph' column
+                self.data_frame.loc[self.data_frame['id'] == text_id, 'dialogue_linearized_graph'] = linearized_graph
+            except:
+                failed_ids.append(text_id)
+
+        # Save final main dataframe
+        self.data_frame.to_pickle(save_path)
+        print("Preprocessed final dataframe (with dialogue linearized argument graphs) saved to {}".format(save_path))
+        logging.info("Preprocessed final dataframe (with dialogue linearized argument graphs) saved to {}".format(save_path))
+
+        logging.debug(self.data_frame)
+        logging.debug(self.data_frame['dialogue_linearized_graph'])
+        logging.debug("num_failed: " + str(len(failed_ids)))
+        logging.debug(failed_ids)
+        print("Preprocessed final dataframe (with dialogue linearized argument graphs) saved to {}".format(save_path))
+        logging.info("Preprocessed final dataframe (with dialogue linearized argument graphs) saved to {}".format(save_path))
+
+        return
+
+    def run_argsum_and_save_df(self, df, save_path="data/Fakeddit"):
         """
         Runs the full ArgSum algorithm (i.e. graph construction, graph
         linearization via GraphLin, text summarization via Transformers)

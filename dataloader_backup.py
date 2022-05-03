@@ -1,3 +1,8 @@
+"""
+::BACKUP
+::DELETE AFTER INCORPORATING ARGSUM INTO dataloader.py
+"""
+
 import sys
 import os
 from pathlib import Path
@@ -61,8 +66,7 @@ class MultimodalDataset(Dataset):
         text_embedder=None,
         image_transform=None,
         image_encoder=None,
-        dialogue_method="ranksum", # "graphlin" | "argsum"
-        summarization_model=None, # Transformers pipeline model for ranksum and argsum
+        summarization_model=None,
         num_classes=2,
     ):
 
@@ -71,7 +75,6 @@ class MultimodalDataset(Dataset):
         self.num_classes = num_classes
         self.dir_to_save_dataframe = dir_to_save_dataframe
         self.prefix_for_all_generated_pkl_files = prefix_for_all_generated_pkl_files
-        self.dialogue_method = dialogue_method
 
         self.label = "2_way_label"
         if num_classes == 3:
@@ -252,10 +255,6 @@ class MultimodalDataset(Dataset):
         # Save this dataframe into a pickle
         # Filename will look something like "train__text_image__dataframe.pkl"
         filename = "__".join([self.dataset_type, self.saved_dataframe_filename_prefix, "dataframe.pkl"])
-        # Dataframes for GraphLin and ArgSum will have graphlin or argsum prefixed
-        # (Note that ranksum is default and has no prefix)
-        if self.dialogue_method == "graphlin" or self.dialogue_method == "argsum":
-            filename = str(self.dialogue_method) + "__" + filename
         if self.prefix_for_all_generated_pkl_files != "":
             # Add prefix if specified, e.g. "sampled_train__{...}.pkl"
             filename = self.prefix_for_all_generated_pkl_files + "_" + filename
@@ -286,14 +285,7 @@ class MultimodalDataset(Dataset):
         """
 
         def generate_summaries_and_save_df(df, save_path="data/Fakeddit"):
-            """
-            Runs RankSum to generate dialogue summaries and saves final
-            dataframe
-
-            Params
-                df: Dataframe made from dialogue data file
-                save_path: Path to save final dataframe
-            """
+            """ df: Dataframe made from dialogue data file """
 
             logging.info("Generating summaries for current dataset...")
 
@@ -351,11 +343,6 @@ class MultimodalDataset(Dataset):
         # After preprocessing, we will save this dialogue dataframe into a pickle
         # Filename will look something like "train__text_image_dialogue__dataframe.pkl"
         final_df_filename = "__".join([self.dataset_type, self.saved_dataframe_filename_prefix, "dataframe.pkl"])
-        # Dataframes for GraphLin and ArgSum will have graphlin or argsum prefixed
-        # (Note that ranksum is default and has no prefix)
-        if self.dialogue_method == "graphlin" or self.dialogue_method == "argsum":
-            final_df_filename = str(self.dialogue_method) + "__" + final_df_filename
-        # Add the final prefix, if any
         if self.prefix_for_all_generated_pkl_files != "":
             final_df_filename = self.prefix_for_all_generated_pkl_files + "_" + final_df_filename
         final_df_save_path = os.path.join(self.dir_to_save_dataframe, final_df_filename)
@@ -395,7 +382,6 @@ class MultimodalDataset(Dataset):
             # keep the comments with posts in the current main dataset
             # Filename will look something like "train__dialogue_dataframe.pkl"
             dialogue_df_filename = "__".join([self.dataset_type, "dialogue_dataframe.pkl"])
-            # Note that the dialogue dataframe is the same for RankSum, GraphLin, and ArgSum
             if self.prefix_for_all_generated_pkl_files != "":
                 dialogue_df_filename = self.prefix_for_all_generated_pkl_files + "_" + dialogue_df_filename
             dialogue_df_save_path = os.path.join(self.dir_to_save_dataframe, dialogue_df_filename)
@@ -405,27 +391,4 @@ class MultimodalDataset(Dataset):
             # Save the final main dataframe (with text, image, and dialogue
             # data with dialogue summaries); note that its filename is different
             # Filename will look something like "train__text_image_dialogue__dataframe.pkl"
-            if self.dialogue_method == "ranksum":
-                generate_summaries_and_save_df(df, save_path=final_df_save_path)
-            elif self.dialogue_method == "graphlin":
-                self.run_graphlin_and_save_df(df, save_path=final_df_save_path)
-            elif self.dialogue_method == "argsum":
-                self.run_argsum_and_save_df(df, save_path=final_df_save_path)
-
-    def run_graphlin_and_save_df(self, dialogue_df, save_path="data/Fakeddit"):
-        """
-        Runs ArgSum until the GraphLin step (i.e. constructs an argument graph
-        and linearizes it, but does not summarize it)
-
-        Saves to the "dialogue_linearized_graph" column of the dataframe
-        """
-        pass
-
-    def run_argsum_and_save_df(self, dialogue_df, save_path="data/Fakeddit"):
-        """
-        Runs the full ArgSum algorithm (i.e. graph construction, graph
-        linearization via GraphLin, text summarization via Transformers)
-
-        Saves to the "dialogue_argsum_summary" column of the dataframe
-        """
-        pass
+            generate_summaries_and_save_df(df, save_path=final_df_save_path)

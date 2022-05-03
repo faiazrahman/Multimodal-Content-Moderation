@@ -71,7 +71,8 @@ class ArgSum:
     def summarize(self, dialogue_utterances: List[str]) -> str:
         """
         Summarizes the given list of dialogue utterances (strings) using the
-        ArgSum algorithm
+        ArgSum algorithm (graph construction, linearization via GraphLin, and
+        summarization via a Transformers model)
 
         Note that the configuration for the ArgSum algorithm is specified
         during instantiation of an `ArgSum(...)` object (i.e. the specific
@@ -109,3 +110,16 @@ class ArgSum:
             summary = summary[0]['summary_text']
 
         return summary
+
+    def construct_and_linearize(self, dialogue_utterances: List[str]) -> str:
+        """
+        Constructs an argument graph for the given list of dialogue utterances
+        (strings) and linearizes them via GraphLin
+
+        This is used to produce a "cleaner" text representation of the dialogue
+        utterances, since they will be linearized via the heuristics defined
+        in the GraphLin algorithm, without incorporating any summarization
+        """
+        graph: ArgumentGraph = self.graph_constructor.construct_graph(dialogue_utterances)
+        linearized_graph: str = self.graph_linearizer.linearize(graph)
+        return linearized_graph

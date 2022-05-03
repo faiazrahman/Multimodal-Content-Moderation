@@ -34,8 +34,9 @@ if __name__ == "__main__":
     parser.add_argument("--from_dialogue_dataframe", type=str, default=None, help="If you're using dialogue (comment) data and have already filtered the dialogue dataframe, pass the path to its serialized .pkl file to continue preprocessing from that point on")
     parser.add_argument("--dir_to_save_dataframe", type=str, default="data/Fakeddit", help="Path to store saved dataframe .pkl file after data preprocessing")
     parser.add_argument("--prefix_for_all_generated_pkl_files", type=str, default="", help="Adds a prefix to all generated .pkl files for this run, e.g. sampled_train_...")
+    parser.add_argument("--dialogue_method", type=str, default="ranksum", help="ranksum | graphlin | argsum; Notes: RankSum ranks all comments then summarizes with a Transformers pipeline; GraphLin constructs and linearizes an argument graph (but does not summarize); ArgSum constructs, linearizes, and summarizes an argument graph")
     parser.add_argument("--modality", type=str, default=None, help="text | image | text-image | text-image-dialogue")
-    parser.add_argument("--dialogue_summarization_model", type=str, default=None)
+    parser.add_argument("--dialogue_summarization_model", type=str, default=None, help="Transformers model for summarization pipeline; e.g. facebook/bart-large-cnn")
     parser.add_argument("--config", type=str, default="", help="config.yaml file with experiment configuration")
     args = parser.parse_args()
 
@@ -82,6 +83,7 @@ if __name__ == "__main__":
             text_embedder=None,
             image_transform=None,
             image_encoder=None,
+            dialogue_method=args.dialogue_method,
             summarization_model=args.dialogue_summarization_model,
             # num_classes=args.num_classes
         )
@@ -100,6 +102,7 @@ if __name__ == "__main__":
             text_embedder=None,
             image_transform=None,
             image_encoder=None,
+            dialogue_method=args.dialogue_method,
             summarization_model=args.dialogue_summarization_model,
             # num_classes=args.num_classes
         )

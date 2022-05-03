@@ -18,7 +18,6 @@ from tqdm import tqdm
 import yaml
 
 from dataloader import MultimodalDataset, Modality
-# from model import JointTextImageModel, JointTextImageDialogueModel
 
 from sentence_transformers import SentenceTransformer
 

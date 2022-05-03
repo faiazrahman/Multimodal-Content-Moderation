@@ -42,7 +42,6 @@ if __name__ == "__main__":
     # TODO rm these first two
     # parser.add_argument("--train", action="store_true", help="Running on training data")
     # parser.add_argument("--test", action="store_true", help="Running on test (evaluation) data")
-    parser.add_argument("--in_house_dialogue_summ", action="store_true", help="For training a model using in-house dialogue summarization data")
     parser.add_argument("--argument_graph", action="store_true", help="For training a model using dialogue argument graphs")
     parser.add_argument("--only_check_args", action="store_true", help="(Only for testing) Stops script after printing out args; doesn't actually run")
     parser.add_argument("--config", type=str, default="", help="config.yaml file with experiment configuration")

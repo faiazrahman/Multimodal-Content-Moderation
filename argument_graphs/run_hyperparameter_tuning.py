@@ -57,6 +57,6 @@ def run_best_rtc():
 if __name__ == "__main__":
 
     # hyperparameter_tuning_auc()
-    # hyperparameter_tuning_rtc()
+    hyperparameter_tuning_rtc()
 
-    run_best_rtc()
+    # run_best_rtc()

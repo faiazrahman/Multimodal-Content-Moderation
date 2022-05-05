@@ -109,7 +109,8 @@ def evaluate_baseline_bart(force_regenerate_summaries=False):
     # Transformer pipeline to generate BART summaries
     summarizer = transformers.pipeline("summarization", model="facebook/bart-large-cnn")
 
-    # Map id: summary
+    # Map id: summary (used to precompute summaries and then add them quickly
+    # to the actual dataframe via `df.apply`)
     summaries = defaultdict(str)
 
     def generate_summary(idx):
@@ -148,13 +149,13 @@ def evaluate_baseline_bart(force_regenerate_summaries=False):
     # If baseline BART summaries have not been generated (i.e. not in the saved
     # dataframe .pkl) or we're forcing re-generating summaries, run pipeline
     if 'baseline_bart_summary' not in df.columns or force_regenerate_summaries:
+        logging.info("Generating baseline BART summaries for SAMSum (for ROUGE evaluation)...")
         # Generate the summaries and save them to the same dataframe .pkl
         for idx in range(len(df.index)):
             if idx % 50 == 0: print(f"Generating summaries for item {idx}...")
             generate_summary(idx)
         df['baseline_bart_summary'] = df.apply(lambda row: fetch_summary(row), axis=1)
-        # TODO: Replace this with the SAMSUM_TEST_DATAFRAME_PATH
-        df.to_pickle(os.path.join(SAMSUM_DATA_PATH, "samsum_test_dataframe2.pkl"))
+        df.to_pickle(SAMSUM_TEST_DATAFRAME_PATH)
 
     print(df)
 

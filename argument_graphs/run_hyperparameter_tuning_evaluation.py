@@ -60,8 +60,9 @@ def evaluation_rtc():
         # 271, # bert, sgd, 3e-4
         # 272, # bert, sgd, 1e-4
         # 273, # bert, sgd, 5e-5
-        274, # bert, sgd, 3e-5
-        281, # bert, sgd, 1e-5
+        # 274, # bert, sgd, 3e-5
+        # 281, # bert, sgd, 1e-5
+        299, # best RTC, with probabilities
     ]
     for version_number in bert_model_version_numbers:
         print(f"Evaluating model version_{version_number}")

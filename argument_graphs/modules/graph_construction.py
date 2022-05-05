@@ -26,8 +26,8 @@ class ArgumentGraphConstructor:
         rtc_trained_model_version: int = None,
         auc_tokenizer_model_name: str = "roberta-base",
         rtc_tokenizer_model_name: str = "bert-base-uncased",
-        auc_model_batch_size: int = 16,
-        rtc_model_batch_size: int = 32,
+        auc_model_batch_size: int = 1, # 16, # TODO revert
+        rtc_model_batch_size: int = 1, # 32, # TODO revert
         entailment_score_minimum_threshold: float = ENTAILMENT_SCORE_MINIMUM_THRESHOLD,
     ):
         logging.info("Initializing ArgumentGraphConstructor instance...")
@@ -82,7 +82,7 @@ class ArgumentGraphConstructor:
                 tokenizer=self.auc_tokenizer
             )
             preds, losses = self.auc_model(encoded_inputs)
-            print(preds)
+            # print(preds)
 
             # Create a node for each argumentative unit in the batch
             for i, argumentative_unit in enumerate(argumentative_unit_batch):
@@ -94,13 +94,13 @@ class ArgumentGraphConstructor:
                 all_nodes.append(node)
                 all_nodes_by_type[classification].append(node)
 
-        # ::TESTING
-        for node_type in all_nodes_by_type.keys():
-            print(str(node_type))
-            for node in all_nodes_by_type[node_type]:
-                print(node.text)
-            print("")
-        # ::END
+        # # ::TESTING
+        # for node_type in all_nodes_by_type.keys():
+        #     print(str(node_type))
+        #     for node in all_nodes_by_type[node_type]:
+        #         print(node.text)
+        #     print("")
+        # # ::END
 
         # Instantiate an ArgumentGraph object
         graph = ArgumentGraph()
@@ -153,9 +153,9 @@ class ArgumentGraphConstructor:
                 )
                 potential_claim_to_claim_edges.append(tuple([edge, max_probability]))
 
-        # ::TESTING
-        print(potential_claim_to_claim_edges)
-        # ::END
+        # # ::TESTING
+        # print(potential_claim_to_claim_edges)
+        # # ::END
 
         # 2. Next, greedily add edges in order of decreasing entailment score
         # only if it does not create a cycle in the graph
@@ -196,11 +196,11 @@ class ArgumentGraphConstructor:
                 )
                 graph.add_edge(edge)
 
-        # ::TESTING
-        graph.print_mapping()
-        print(f"has_cycle: {graph.has_cycle()}")
-        graph.print_graph()
-        # ::END
+        # # ::TESTING
+        # graph.print_mapping()
+        # print(f"has_cycle: {graph.has_cycle()}")
+        # graph.print_graph()
+        # # ::END
 
         return graph
 
@@ -250,7 +250,7 @@ class ArgumentGraphConstructor:
             )
             preds, losses = rtc_model(encoded_inputs) # TODO: Return probabilities too
             probabilities = [1.0 for _ in range(len(targets_batch))] # TODO: Get probabilities from model
-            print(preds)
+            # print(preds)
 
             for i, target in enumerate(targets_batch):
                 if (preds[i] == int(RelationshipType.SUPPORTS)
@@ -258,10 +258,10 @@ class ArgumentGraphConstructor:
                     max_probability = probabilities[i]
                     max_target = target
 
-        # ::TESTING
-        print(max_probability)
-        print(max_target)
-        if max_target: print(source.text); print(max_target.text)
-        # ::END
+        # # ::TESTING
+        # print(max_probability)
+        # print(max_target)
+        # if max_target: print(source.text); print(max_target.text)
+        # # ::END
 
         return max_target, max_probability

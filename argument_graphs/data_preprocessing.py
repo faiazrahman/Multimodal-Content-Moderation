@@ -70,7 +70,7 @@ ALL_RTC_DATA_PATH = os.path.join(RTC_DATA_PATH, ALL_RTC_DATA_FILE)
 ALL_RTC_DATAFRAME_FILE = "rtc_dataframe.pkl"
 ALL_RTC_DATAFRAME_PATH = os.path.join(RTC_DATA_PATH, ALL_RTC_DATAFRAME_FILE)
 
-logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
+logging.basicConfig(level=logging.INFO) # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 def clean_ampersand_data():
     """

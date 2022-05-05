@@ -11,7 +11,7 @@ from torch.utils.data import Dataset, DataLoader
 
 from transformers import AutoTokenizer
 
-logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
+logging.basicConfig(level=logging.INFO) # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

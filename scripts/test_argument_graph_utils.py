@@ -23,7 +23,7 @@ from argument_graphs.utils import generate_batches, encode_single_inputs
 TRAINED_MODEL_VERSION = 114
 PL_ASSETS_PATH = "./lightning_logs"
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
 

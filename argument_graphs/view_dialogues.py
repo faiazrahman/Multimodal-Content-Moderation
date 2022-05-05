@@ -15,7 +15,7 @@ TEST_PREPROCESSED_DATAFRAME_PATH = os.path.join(DATA_PATH, "sampled_test__text_i
 TRAIN_DIALOGUE_DATAFRAME_PATH = os.path.join(DATA_PATH, "sampled_train__dialogue_dataframe.pkl")
 TEST_DIALOGUE_DATAFRAME_PATH = os.path.join(DATA_PATH, "sampled_test__dialogue_dataframe.pkl")
 
-logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
+logging.basicConfig(level=logging.INFO) # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 def print_list(lst: List[str]):
     for element in lst:

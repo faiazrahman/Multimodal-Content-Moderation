@@ -36,7 +36,7 @@ TEST_DATA_SIZE = 1000
 SENTENCE_TRANSFORMER_EMBEDDING_DIM = 768
 DEFAULT_GPUS = [0, 1]
 
-logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
+logging.basicConfig(level=logging.INFO) # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 if __name__ == "__main__":
     # torch.multiprocessing.set_start_method('spawn')

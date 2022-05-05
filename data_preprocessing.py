@@ -1,6 +1,9 @@
 """
 python data_preprocessing.py --test --from_dialogue_dataframe data/Fakeddit/test__dialogue_dataframe.pkl --dialogue_method graphlin --modality text-image-dialogue
 python data_preprocessing.py --test --from_dialogue_dataframe data/Fakeddit/test__dialogue_dataframe.pkl --dialogue_method argsum --modality text-image-dialogue
+
+python data_preprocessing.py --train --from_dialogue_dataframe data/Fakeddit/train__dialogue_dataframe.pkl --dialogue_method graphlin --modality text-image-dialogue
+python data_preprocessing.py --train --from_dialogue_dataframe data/Fakeddit/train__dialogue_dataframe.pkl --dialogue_method argsum --modality text-image-dialogue
 """
 
 import sys
@@ -27,7 +30,7 @@ TEST_DATA_SIZE = 1000
 DEFAULT_TRAIN_DATA_PATH = os.path.join(DATA_PATH, "multimodal_train_" + str(TRAIN_DATA_SIZE) + ".tsv")
 DEFAULT_TEST_DATA_PATH = os.path.join(DATA_PATH, "multimodal_test_" + str(TEST_DATA_SIZE) + ".tsv")
 
-logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
+logging.basicConfig(level=logging.INFO) # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

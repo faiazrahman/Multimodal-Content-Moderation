@@ -18,7 +18,7 @@ import transformers
 
 from argument_graphs.argsum import ArgSum
 
-logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
+logging.basicConfig(level=logging.INFO) # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 DATA_PATH = "./data/Fakeddit"
 PL_ASSETS_PATH = "./lightning_logs"
@@ -96,8 +96,10 @@ class MultimodalDataset(Dataset):
         self.image_encoder = image_encoder
         self.summarization_model = summarization_model
 
-        # NOTE: In-house summarization model will be handled in a separate
-        # torch.utils.data.Dataset class
+        # NOTE: This is only for baseline BART summarization (RankSum); we
+        # don't need to load this model if our dialogue_method is argsum
+        # or graphlin
+        # TODO: Add a check so we only load this pipeline if we're using RankSum
         self.summarizer = None
         if Modality(modality) == Modality.TEXT_IMAGE_DIALOGUE and summarization_model:
             # Model options: "facebook/bart-large-cnn", "t5-small", "t5-base", "t5-large", "t5-3b", "t5-11b"

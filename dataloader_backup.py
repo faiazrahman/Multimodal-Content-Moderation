@@ -21,7 +21,7 @@ from torch.utils.data import Dataset, DataLoader
 
 import transformers
 
-logging.basicConfig(level=logging.DEBUG) # DEBUG, INFO, WARNING, ERROR, CRITICAL
+logging.basicConfig(level=logging.INFO) # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 DATA_PATH = "./data/Fakeddit"
 PL_ASSETS_PATH = "./lightning_logs"

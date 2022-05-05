@@ -42,7 +42,7 @@ SAMSUM_TRAIN_DATAFRAME_PATH = os.path.join(SAMSUM_DATA_PATH, "samsum_train_dataf
 SAMSUM_TEST_DATAFRAME_PATH = os.path.join(SAMSUM_DATA_PATH, "samsum_test_dataframe.pkl")
 SAMSUM_VAL_DATAFRAME_PATH = os.path.join(SAMSUM_DATA_PATH, "samsum_val_dataframe.pkl")
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 def preprocess_samsum_data(data_path: str):
 

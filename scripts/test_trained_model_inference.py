@@ -22,7 +22,7 @@ from utils import get_checkpoint_filename_from_dir
 TRAINED_MODEL_VERSION = 114
 PL_ASSETS_PATH = "./lightning_logs"
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
 

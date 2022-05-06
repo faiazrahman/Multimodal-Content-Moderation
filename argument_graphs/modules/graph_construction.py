@@ -28,8 +28,8 @@ class ArgumentGraphConstructor:
         rtc_trained_model_version: int = None,
         auc_tokenizer_model_name: str = "roberta-base",
         rtc_tokenizer_model_name: str = "bert-base-uncased",
-        auc_model_batch_size: int = 16, # TODO revert
-        rtc_model_batch_size: int = 32, # TODO revert
+        auc_model_batch_size: int = 1, # 16, # TODO revert
+        rtc_model_batch_size: int = 1, # 32, # TODO revert
         entailment_score_minimum_threshold: float = ENTAILMENT_SCORE_MINIMUM_THRESHOLD,
     ):
         logging.info("Initializing ArgumentGraphConstructor instance...")

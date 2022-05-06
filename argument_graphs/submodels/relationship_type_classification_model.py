@@ -65,6 +65,11 @@ class SequenceClassificationModel(nn.Module):
         # probability tensor as well, since we use this as the entailment score
         probabilities = torch.nn.functional.softmax(logits, dim=1)
 
+        # Note that the `probabilities` contains probability values for all
+        # three labels; to get the single probability value for the predicted
+        # label (i.e. the max), use the following
+        #   probabilities = torch.max(probabilities, dim=1).values
+
         return (pred, probabilities, loss)
 
 class RelationshipTypeClassificationModel(pl.LightningModule):

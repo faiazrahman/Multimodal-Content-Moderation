@@ -3,7 +3,7 @@ import sys
 import subprocess
 from datetime import datetime
 
-GPU_ID = 2  # Can specify multiple as a comma-separated string, e.g. "0,1"
+GPU_ID = 5  # Can specify multiple as a comma-separated string, e.g. "0,1"
 LOGS_DIR = "logs"
 
 def run(command: str):
@@ -83,5 +83,10 @@ if __name__ == "__main__":
     # subprocess.call("python run_training.py --config configs/sampled_text_image_dialogue__2_class__mpnet_resnet_bart.yaml", shell=True)
     # run("python run_training.py --only_check_args --config configs/sampled_text_image_dialogue__2_class__mpnet_resnet_bart.yaml")
 
-    train_graphlin_mpnet_resnet_bart()
-    train_argsum_mpnet_resnet_bart()
+    # train_graphlin_mpnet_resnet_bart()
+    # train_argsum_mpnet_resnet_bart()
+
+    # TESTING OUT TEXT BASELINE MODEL
+    # run(f"python run_training.py --config configs/text__2_class__mpnet.yaml --gpus {GPU_ID}")
+
+    train_text_baseline_roberta_mpnet()

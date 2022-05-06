@@ -16,6 +16,7 @@ from sentence_transformers import SentenceTransformer
 
 from dataloader import MultimodalDataset, Modality
 from models.callbacks import PrintCallback
+from models.text_baseline_model import TextBaselineMMFNDModel
 from models.text_image_resnet_model import TextImageResnetMMFNDModel
 from models.text_image_resnet_dialogue_summarization_model import TextImageResnetDialogueSummarizationMMFNDModel
 from utils import get_checkpoint_filename_from_dir
@@ -157,7 +158,9 @@ if __name__ == "__main__":
     text_embedder = SentenceTransformer(args.text_embedder)
     image_transform = None
 
-    if args.model == "text_image_resnet_model":
+    if args.model == "text_baseline_model":
+        model = TextBaselineMMFNDModel.load_from_checkpoint(checkpoint_path)
+    elif args.model == "text_image_resnet_model":
         model = TextImageResnetMMFNDModel.load_from_checkpoint(checkpoint_path)
         image_transform = TextImageResnetMMFNDModel.build_image_transform()
     elif args.model == "text_image_resnet_dialogue_summarization_model":

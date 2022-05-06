@@ -4,6 +4,7 @@ import logging
 import torch
 import torch.nn as nn
 import torchvision
+import torchmetrics
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import Callback

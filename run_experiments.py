@@ -35,36 +35,36 @@ def run(command: str):
 
 def train_text_baseline_roberta_mpnet():
     """ text: {roberta, mpnet} """
-    run("python run_training.py --config configs/text__2_class__roberta.yaml")
-    run("python run_training.py --config configs/text__3_class__roberta.yaml")
-    run("python run_training.py --config configs/text__6_class__roberta.yaml")
-    run("python run_training.py --config configs/text__2_class__mpnet.yaml")
-    run("python run_training.py --config configs/text__3_class__mpnet.yaml")
-    run("python run_training.py --config configs/text__6_class__mpnet.yaml")
+    run(f"python run_training.py --config configs/text__2_class__roberta.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/text__3_class__roberta.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/text__6_class__roberta.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/text__2_class__mpnet.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/text__3_class__mpnet.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/text__6_class__mpnet.yaml --gpus {GPU_ID}")
 
 def train_image_baseline_resnet():
     """ image: resnet """
-    run("python run_training.py --config configs/image__2_class__resnet.yaml")
-    run("python run_training.py --config configs/image__3_class__resnet.yaml")
-    run("python run_training.py --config configs/image__6_class__resnet.yaml")
+    run(f"python run_training.py --config configs/image__2_class__resnet.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/image__3_class__resnet.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/image__6_class__resnet.yaml --gpus {GPU_ID}")
 
 def train_roberta_mpnet_resnet_bart_ranksum():
     """
     text: {roberta, mpnet} + image: resnet
     text: {roberta, mpnet} + image: resnet + dialogue: RankSum-BART
     """
-    run("python run_training.py --config configs/text_image__2_class__mpnet_resnet.yaml")
-    run("python run_training.py --config configs/text_image__3_class__mpnet_resnet.yaml")
-    run("python run_training.py --config configs/text_image__6_class__mpnet_resnet.yaml")
-    run("python run_training.py --config configs/text_image_dialogue__2_class__mpnet_resnet_bart.yaml")
-    run("python run_training.py --config configs/text_image_dialogue__3_class__mpnet_resnet_bart.yaml")
-    run("python run_training.py --config configs/text_image_dialogue__6_class__mpnet_resnet_bart.yaml")
-    run("python run_training.py --config configs/text_image__2_class__roberta_resnet.yaml")
-    run("python run_training.py --config configs/text_image__3_class__roberta_resnet.yaml")
-    run("python run_training.py --config configs/text_image__6_class__roberta_resnet.yaml")
-    run("python run_training.py --config configs/text_image_dialogue__2_class__roberta_resnet_bart.yaml")
-    run("python run_training.py --config configs/text_image_dialogue__3_class__roberta_resnet_bart.yaml")
-    run("python run_training.py --config configs/text_image_dialogue__6_class__roberta_resnet_bart.yaml")
+    run(f"python run_training.py --config configs/text_image__2_class__mpnet_resnet.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/text_image__3_class__mpnet_resnet.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/text_image__6_class__mpnet_resnet.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/text_image_dialogue__2_class__mpnet_resnet_bart.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/text_image_dialogue__3_class__mpnet_resnet_bart.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/text_image_dialogue__6_class__mpnet_resnet_bart.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/text_image__2_class__roberta_resnet.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/text_image__3_class__roberta_resnet.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/text_image__6_class__roberta_resnet.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/text_image_dialogue__2_class__roberta_resnet_bart.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/text_image_dialogue__3_class__roberta_resnet_bart.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/text_image_dialogue__6_class__roberta_resnet_bart.yaml --gpus {GPU_ID}")
 
 def train_graphlin_mpnet_resnet_bart():
     """ text: mpnet + image: resnet + dialogue: GraphLin-BART """

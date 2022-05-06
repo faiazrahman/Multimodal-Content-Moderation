@@ -19,6 +19,7 @@ from models.callbacks import PrintCallback
 from models.text_baseline_model import TextBaselineMMFNDModel
 from models.image_resnet_baseline_model import ImageResnetBaselineMMFNDModel
 from models.text_image_resnet_model import TextImageResnetMMFNDModel
+from models.text_image_dino_model import TextImageDinoMMFNDModel
 from models.text_image_resnet_dialogue_summarization_model import TextImageResnetDialogueSummarizationMMFNDModel
 from utils import get_checkpoint_filename_from_dir
 
@@ -167,6 +168,9 @@ if __name__ == "__main__":
     elif args.model == "text_image_resnet_model":
         model = TextImageResnetMMFNDModel.load_from_checkpoint(checkpoint_path)
         image_transform = TextImageResnetMMFNDModel.build_image_transform()
+    elif args.model == "text_image_dino_model":
+        model = TextImageDinoMMFNDModel.load_from_checkpoint(checkpoint_path)
+        image_transform = TextImageDinoMMFNDModel.build_image_transform()
     elif args.model == "text_image_resnet_dialogue_summarization_model":
         model = TextImageResnetDialogueSummarizationMMFNDModel.load_from_checkpoint(checkpoint_path)
         image_transform = TextImageResnetDialogueSummarizationMMFNDModel.build_image_transform()

@@ -18,6 +18,7 @@ from models.callbacks import PrintCallback
 from models.text_baseline_model import TextBaselineMMFNDModel
 from models.image_resnet_baseline_model import ImageResnetBaselineMMFNDModel
 from models.text_image_resnet_model import TextImageResnetMMFNDModel
+from models.text_image_dino_model import TextImageDinoMMFNDModel
 from models.text_image_resnet_dialogue_summarization_model import TextImageResnetDialogueSummarizationMMFNDModel
 
 # Multiprocessing for dataset batching
@@ -68,6 +69,7 @@ if __name__ == "__main__":
     parser.add_argument("--fusion_output_size", type=int, default=None, help="Dimension after multi-modal embeddings fusion")
     parser.add_argument("--text_embedder", type=str, default=None, help="all-mpnet-base-v2 | all-distilroberta-v1")
     parser.add_argument("--image_encoder", type=str, default=None, help="resnet | dino")
+    parser.add_argument("--dino_model", type=str, default=None, help="facebook/dino-vits16 | facebook/dino-vits8 | facebook/dino-vitb16 | facebook/dino-vitb8")
     parser.add_argument("--dialogue_summarization_model", type=str, default=None, help="(Does NOT use in-house dialogue summarization) None=Transformers.Pipeline default i.e. sshleifer/distilbart-cnn-12-6 | bart-large-cnn | t5-small | t5-base | t5-large")
     parser.add_argument("--train_data_path", type=str, default=None)
     parser.add_argument("--preprocessed_train_dataframe_path", type=str, default=None)
@@ -98,6 +100,8 @@ if __name__ == "__main__":
         args.text_embedder = config.get("text_embedder", "all-mpnet-base-v2")
     if not args.image_encoder:
         args.image_encoder = config.get("image_encoder", "resnet")
+    if not args.dino_model and args.image_encoder == "dino":
+        args.dino_model = config.get("dino_model", "facebook/dino-vitb16")
     if not args.dialogue_summarization_model:
         args.dialogue_summarization_model = config.get("dialogue_summarization_model", "bart-large-cnn")
     if not args.train_data_path:
@@ -122,6 +126,7 @@ if __name__ == "__main__":
     print(f"num_cpus: {args.num_cpus}")
     print(f"text_embedder: {args.text_embedder}")
     print(f"image_encoder: {args.image_encoder}")
+    if args.image_encoder == "dino": print(f"dino_model: {args.dino_model}")
     print(f"dialogue_summarization_model: {args.dialogue_summarization_model}")
     print(f"train_data_path: {args.train_data_path}")
     print(f"preprocessed_train_dataframe_path: {args.preprocessed_train_dataframe_path}")
@@ -140,6 +145,7 @@ if __name__ == "__main__":
         "learning_rate": args.learning_rate,
         "dropout_p": args.dropout_p,
         "fusion_output_size": args.fusion_output_size,
+        "dino_model": args.dino_model,
 
         # For logging
         "model": args.model,
@@ -167,6 +173,9 @@ if __name__ == "__main__":
     elif args.model == "text_image_resnet_model":
         model = TextImageResnetMMFNDModel(hparams)
         image_transform = TextImageResnetMMFNDModel.build_image_transform()
+    elif args.model == "text_image_dino_model":
+        model = TextImageDinoMMFNDModel(hparams)
+        image_transform = TextImageDinoMMFNDModel.build_image_transform()
     elif args.model == "text_image_resnet_dialogue_summarization_model":
         model = TextImageResnetDialogueSummarizationMMFNDModel(hparams)
         image_transform = TextImageResnetDialogueSummarizationMMFNDModel.build_image_transform()

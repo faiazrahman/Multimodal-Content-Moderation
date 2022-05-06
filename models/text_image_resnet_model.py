@@ -39,6 +39,7 @@ class TextImageResnetModel(nn.Module):
             fusion_output_size,
             dropout_p,
             hidden_size=512,
+            fusion_method="early-concat", # "early-concat" | "low-rank"
         ):
         super(TextImageResnetModel, self).__init__()
         self.text_module = text_module

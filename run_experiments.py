@@ -142,5 +142,5 @@ if __name__ == "__main__":
     # IN PROGRESS
     # train_roberta_mpnet_dino()
 
-    # TODO
+    # IN PROGRESS
     train_roberta_mpnet_dino_bart_ranksum()

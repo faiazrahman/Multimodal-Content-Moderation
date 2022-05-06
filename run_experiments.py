@@ -161,4 +161,5 @@ if __name__ == "__main__":
     # IN PROGRESS
     # train_roberta_mpnet_dino_bart_ranksum()
 
-    train_low_rank_fusion_text_image()
+    # train_low_rank_fusion_text_image()
+    train_low_rank_fusion_text_image_dialogue()

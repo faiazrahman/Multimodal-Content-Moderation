@@ -54,15 +54,6 @@ def preprocess_mmhs_data(
     with open(MMHS_TWEETS_DICT_PATH) as file:
         tweets_dict = json.load(file)
 
-    # print(len(data_ids))
-    # print(data_ids[0])
-    # print(type(data_ids[0]))
-
-    # print(len(tweets_dict))
-    # print(type(tweets_dict))
-    # print(tweets_dict[list(tweets_dict.keys())[0]])
-    # print(type(tweets_dict[list(tweets_dict.keys())[0]]))
-
     def get_majority_label(row):
         """
         Returns the majority label (0-5)

@@ -37,7 +37,7 @@ in WACV 2020
 # Data Preprocessing and Dataloader Overview
 Thus, our data preprocessing will
 - Load the Python dict mapping tweet_id to tweet_url, labels, img_url,
-  tweet_text, labels_str
+  tweet_text, labels
 - Select the majority label (if none, do not include this example)
 - Get the tweet id from the dict key
 - Get the text from the dict value field 'tweet_text'

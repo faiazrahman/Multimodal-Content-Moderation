@@ -14,6 +14,7 @@ data/Fakeddit/*
 !data/MMHS150K
 data/MMHS150K/*
 !data/MMHS150K/requirements.txt
+!data/MMHS150K/README.txt
 
 !data/AMPERSAND
 data/AMPERSAND/*

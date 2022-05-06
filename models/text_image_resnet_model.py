@@ -82,9 +82,10 @@ class TextImageResnetModel(nn.Module):
             # Compute outer product of uni-modal tensors and embed into `fusion_output_size` dimension
             # Note: We use PyTorch's Einstein summation notation processor to
             # compute the outer product
+            # https://pytorch.org/docs/stable/generated/torch.einsum.html
             # To compute the outer product of two tensors A and B, the
             # einsum notation is `torch.einsum('i,j->ij', A, B)`
-            # However, since pass training examples through our model in
+            # However, since we pass training examples through our model in
             # batches, we want to compute the outer product for pairs in
             # the batch; thus, we maintain the batch dimension as follows
             outer_product = torch.einsum('bi,bj->bij', text_features, image_features)

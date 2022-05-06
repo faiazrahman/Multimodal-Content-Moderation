@@ -96,14 +96,6 @@ class ArgumentGraphConstructor:
                 all_nodes.append(node)
                 all_nodes_by_type[classification].append(node)
 
-        # # ::TESTING
-        # for node_type in all_nodes_by_type.keys():
-        #     print(str(node_type))
-        #     for node in all_nodes_by_type[node_type]:
-        #         print(node.text)
-        #     print("")
-        # # ::END
-
         # Instantiate an ArgumentGraph object
         graph = ArgumentGraph()
 
@@ -155,10 +147,6 @@ class ArgumentGraphConstructor:
                 )
                 potential_claim_to_claim_edges.append(tuple([edge, max_probability]))
 
-        # # ::TESTING
-        # print(potential_claim_to_claim_edges)
-        # # ::END
-
         # 2. Next, greedily add edges in order of decreasing entailment score
         # only if it does not create a cycle in the graph
         for edge, probability in sorted(
@@ -197,12 +185,6 @@ class ArgumentGraphConstructor:
                     relation=RelationshipType.TO_ROOT
                 )
                 graph.add_edge(edge)
-
-        # # ::TESTING
-        # graph.print_mapping()
-        # print(f"has_cycle: {graph.has_cycle()}")
-        # graph.print_graph()
-        # # ::END
 
         return graph
 
@@ -276,11 +258,5 @@ class ArgumentGraphConstructor:
                     and (not max_probability or probabilities[i] > max_probability)):
                     max_probability = probabilities[i]
                     max_target = target
-
-        # # ::TESTING
-        # print(max_probability)
-        # print(max_target)
-        # if max_target: print(source.text); print(max_target.text)
-        # # ::END
 
         return max_target, max_probability

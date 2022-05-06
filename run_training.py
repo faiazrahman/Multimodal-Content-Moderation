@@ -20,6 +20,7 @@ from models.image_resnet_baseline_model import ImageResnetBaselineMMFNDModel
 from models.text_image_resnet_model import TextImageResnetMMFNDModel
 from models.text_image_dino_model import TextImageDinoMMFNDModel
 from models.text_image_resnet_dialogue_summarization_model import TextImageResnetDialogueSummarizationMMFNDModel
+from models.text_image_dino_dialogue_summarization_model import TextImageDinoDialogueSummarizationMMFNDModel
 
 # Multiprocessing for dataset batching
 # NUM_CPUS=40 on Yale Ziva server, NUM_CPUS=24 on Yale Tangra server
@@ -179,6 +180,9 @@ if __name__ == "__main__":
     elif args.model == "text_image_resnet_dialogue_summarization_model":
         model = TextImageResnetDialogueSummarizationMMFNDModel(hparams)
         image_transform = TextImageResnetDialogueSummarizationMMFNDModel.build_image_transform()
+    elif args.model == "text_image_dino_dialogue_summarization_model":
+        model = TextImageDinoDialogueSummarizationMMFNDModel(hparams)
+        image_transform = TextImageDinoDialogueSummarizationMMFNDModel.build_image_transform()
     else:
         raise Exception("run_training.py: Must pass a valid --model name to train")
 

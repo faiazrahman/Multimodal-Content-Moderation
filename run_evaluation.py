@@ -21,6 +21,7 @@ from models.image_resnet_baseline_model import ImageResnetBaselineMMFNDModel
 from models.text_image_resnet_model import TextImageResnetMMFNDModel
 from models.text_image_dino_model import TextImageDinoMMFNDModel
 from models.text_image_resnet_dialogue_summarization_model import TextImageResnetDialogueSummarizationMMFNDModel
+from models.text_image_dino_dialogue_summarization_model import TextImageDinoDialogueSummarizationMMFNDModel
 from utils import get_checkpoint_filename_from_dir
 
 # Multiprocessing for dataset batching
@@ -174,6 +175,9 @@ if __name__ == "__main__":
     elif args.model == "text_image_resnet_dialogue_summarization_model":
         model = TextImageResnetDialogueSummarizationMMFNDModel.load_from_checkpoint(checkpoint_path)
         image_transform = TextImageResnetDialogueSummarizationMMFNDModel.build_image_transform()
+    elif args.model == "text_image_dino_dialogue_summarization_model":
+        model = TextImageDinoDialogueSummarizationMMFNDModel.load_from_checkpoint(checkpoint_path)
+        image_transform = TextImageDinoDialogueSummarizationMMFNDModel.build_image_transform()
     else:
         raise Exception("run_evaluation.py: Must pass a valid --model name to evaluate")
 

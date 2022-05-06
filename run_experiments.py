@@ -6,7 +6,7 @@ from datetime import datetime
 GPU_ID = 5  # Can specify multiple as a comma-separated string, e.g. "0,1"
 LOGS_DIR = "logs"
 
-def run(command: str):
+def run(command: str, log_prefix: str = ""):
     """
     Runs given command and redirects output to a file named after the config
     and the timestamp at which it was run
@@ -20,6 +20,14 @@ def run(command: str):
         if "/" in after_slash:
             before_slash, keyword, after_slash = after_slash.strip().partition("/")
         config_name = after_slash.split(".")[0] # Gets just config_name
+
+    # When running evaluation with only --trained_model_version (and no config)
+    # we can pass in the name we want for the log
+    if log_prefix != "":
+        if config_name == "unnamed":
+            config_name = log_prefix
+        else:
+            config_name = log_prefix + "__" + config_name
 
     if "evaluation" in command:
         # Name evaluation logs with prefix
@@ -46,7 +54,8 @@ def eval_text_baseline_roberta_mpnet():
     # NOTE: Make sure you specify the trained model version in the config (or pass it as --trained_model_version)
     trained_model_version_numbers = [i for i in range(318, 324)] # [318, 323] inclusive
     for version_number in trained_model_version_numbers:
-        run(f"python run_evaluation.py --trained_model_version {version_number} --gpus {GPU_ID}")
+        run(f"python run_evaluation.py --trained_model_version {version_number} --gpus {GPU_ID}",
+            log_prefix="text_baseline")
 
 def train_image_baseline_resnet():
     """ image: resnet """
@@ -56,9 +65,10 @@ def train_image_baseline_resnet():
 
 def eval_image_baseline_resnet():
     # NOTE: Make sure you specify the trained model version in the config (or pass it as --trained_model_version)
-    trained_model_version_numbers = [i for i in range(325, 328)] # [325, 327] inclusive
+    trained_model_version_numbers = [325, 326, 328]
     for version_number in trained_model_version_numbers:
-        run(f"python run_evaluation.py --trained_model_version {version_number} --gpus {GPU_ID}")
+        run(f"python run_evaluation.py --trained_model_version {version_number} --gpus {GPU_ID}",
+            log_prefix="image_baseline")
 
 def train_roberta_mpnet_resnet_bart_ranksum():
     """
@@ -102,8 +112,8 @@ if __name__ == "__main__":
     # run(f"python run_training.py --config configs/text__2_class__mpnet.yaml --gpus {GPU_ID}")
 
     # train_text_baseline_roberta_mpnet()
-    train_image_baseline_resnet()
+    # train_image_baseline_resnet()
 
     # TODO FROM HERE
-    # eval_text_baseline_roberta_mpnet()
-    # eval_image_baseline_resnet()
+    eval_text_baseline_roberta_mpnet()
+    eval_image_baseline_resnet()

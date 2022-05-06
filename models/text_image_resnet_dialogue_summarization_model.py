@@ -61,7 +61,7 @@ class TextImageResnetDialogueSummarizationModel(nn.Module):
         fused = self.dropout(
             torch.nn.functional.relu(self.fusion(combined)))
         # logits = self.fc(fused)
-        hidden = torch.nn.functional.relu(self.fc1(fused)) # trial
+        hidden = torch.nn.functional.relu(self.fc1(fused)) # trial # TODO rm trial comments
         logits = self.fc2(hidden) # trial
 
         # nn.CrossEntropyLoss expects raw logits as model output, NOT torch.nn.functional.softmax(logits, dim=1)

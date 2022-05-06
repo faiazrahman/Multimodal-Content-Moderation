@@ -4,6 +4,7 @@ import logging
 import torch
 import torch.nn as nn
 import torchvision
+import torchmetrics
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import Callback
@@ -99,6 +100,20 @@ class TextImageResnetMMFNDModel(pl.LightningModule):
             dropout_p=self.hparams.get("dropout_p", DROPOUT_P)
         )
 
+        # Metrics for evaluation
+        # https://torchmetrics.readthedocs.io/en/stable/pages/lightning.html
+        self.accuracy = torchmetrics.Accuracy()
+        # NOTE: You cannot define this as `self.precision`, or else it will
+        # raise TypeError: cannot assign 'int' as child module 'precision'
+        # (We use `self.precision_metric` instead)
+        self.precision_metric = torchmetrics.Precision()
+        self.recall = torchmetrics.Recall()
+        self.f1_score = torchmetrics.F1Score()
+        self.confusion_matrix = torchmetrics.ConfusionMatrix(
+            # ConfusionMatrix() takes a required positional argument: num_classes
+            self.hparams.get("num_classes", NUM_CLASSES)
+        )
+
         # When reloading the model for evaluation, we will need the
         # hyperparameters as they are now
         self.save_hyperparameters()
@@ -136,14 +151,28 @@ class TextImageResnetMMFNDModel(pl.LightningModule):
         text, image, label = batch["text"], batch["image"], batch["label"]
         pred, loss = self.model(text, image, label)
         pred_label = torch.argmax(pred, dim=1)
-        accuracy = torch.sum(pred_label == label).item() / (len(label) * 1.0)
+        accuracy = torch.sum(pred_label == label).item() / (len(label) * 1.0) # TODO deprecate
+        self.accuracy(pred_label, label)
+        self.precision_metric(pred_label, label)
+        self.recall(pred_label, label)
+        self.f1_score(pred_label, label)
+        self.confusion_matrix(pred_label, label)
         output = {
             'test_loss': loss,
-            'test_acc': torch.tensor(accuracy).cuda()
+            'test_acc': torch.tensor(accuracy).cuda(), # TODO deprecate
+            'test_accuracy': self.accuracy,
+            'test_precision': self.precision_metric,
+            'test_recall': self.recall,
+            'test_f1_score': self.f1_score,
+            'test_confusion_matrix': self.confusion_matrix,
         }
         self.log("test_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        self.log("test_acc", torch.tensor(accuracy).cuda(), on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        print(loss.item(), output['test_acc'])
+        self.log("test_acc", torch.tensor(accuracy).cuda(), on_step=True, on_epoch=True, prog_bar=True, logger=True) # TODO deprecate
+        self.log("test_accuracy", self.accuracy, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log("test_precision", self.precision_metric, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log("test_recall", self.recall, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log("test_f1_score", self.f1_score, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        print(loss.item(), output['test_acc']) # TODO: deprecate
         return output
 
     # Optional for pl.LightningModule

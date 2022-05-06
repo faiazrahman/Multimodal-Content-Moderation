@@ -152,11 +152,13 @@ class TextImageResnetMMFNDModel(pl.LightningModule):
         pred, loss = self.model(text, image, label)
         pred_label = torch.argmax(pred, dim=1)
         accuracy = torch.sum(pred_label == label).item() / (len(label) * 1.0) # TODO deprecate
+
         self.accuracy(pred_label, label)
         self.precision_metric(pred_label, label)
         self.recall(pred_label, label)
         self.f1_score(pred_label, label)
         self.confusion_matrix(pred_label, label)
+
         output = {
             'test_loss': loss,
             'test_acc': torch.tensor(accuracy).cuda(), # TODO deprecate
@@ -166,6 +168,7 @@ class TextImageResnetMMFNDModel(pl.LightningModule):
             'test_f1_score': self.f1_score,
             'test_confusion_matrix': self.confusion_matrix,
         }
+
         self.log("test_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         self.log("test_acc", torch.tensor(accuracy).cuda(), on_step=True, on_epoch=True, prog_bar=True, logger=True) # TODO deprecate
         self.log("test_accuracy", self.accuracy, on_step=True, on_epoch=True, prog_bar=True, logger=True)
@@ -173,6 +176,7 @@ class TextImageResnetMMFNDModel(pl.LightningModule):
         self.log("test_recall", self.recall, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         self.log("test_f1_score", self.f1_score, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         print(loss.item(), output['test_acc']) # TODO: deprecate
+
         return output
 
     # Optional for pl.LightningModule

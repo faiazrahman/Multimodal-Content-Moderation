@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     argsum = ArgSum(
         auc_trained_model_version=209,
-        rtc_trained_model_version=264,
+        rtc_trained_model_version=299, #264,
         auc_tokenizer_model_name=BERT,
         rtc_tokenizer_model_name=BERT
     )

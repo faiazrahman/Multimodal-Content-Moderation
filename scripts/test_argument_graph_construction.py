@@ -13,7 +13,7 @@ ROBERTA = "roberta-base"
 if __name__ == "__main__":
     graph_constructor = ArgumentGraphConstructor(
         auc_trained_model_version=209,
-        rtc_trained_model_version=264,
+        rtc_trained_model_version=299, #264,
         auc_tokenizer_model_name=BERT,
         rtc_tokenizer_model_name=BERT
     )
@@ -27,4 +27,5 @@ if __name__ == "__main__":
         "Citizens are upset."
     ]
 
-    graph_constructor.construct_graph(dialogue_utterances=dialogue_utterances)
+    graph = graph_constructor.construct_graph(dialogue_utterances=dialogue_utterances)
+    graph.print_graph()

@@ -1,6 +1,8 @@
 import logging
 from typing import List, Tuple
 
+import torch
+
 import transformers
 from transformers import AutoTokenizer
 
@@ -26,8 +28,8 @@ class ArgumentGraphConstructor:
         rtc_trained_model_version: int = None,
         auc_tokenizer_model_name: str = "roberta-base",
         rtc_tokenizer_model_name: str = "bert-base-uncased",
-        auc_model_batch_size: int = 1, # 16, # TODO revert
-        rtc_model_batch_size: int = 1, # 32, # TODO revert
+        auc_model_batch_size: int = 16, # TODO revert
+        rtc_model_batch_size: int = 32, # TODO revert
         entailment_score_minimum_threshold: float = ENTAILMENT_SCORE_MINIMUM_THRESHOLD,
     ):
         logging.info("Initializing ArgumentGraphConstructor instance...")
@@ -248,9 +250,26 @@ class ArgumentGraphConstructor:
                 targets_batch_text,
                 tokenizer=tokenizer
             )
-            preds, losses = rtc_model(encoded_inputs) # TODO: Return probabilities too
-            probabilities = [1.0 for _ in range(len(targets_batch))] # TODO: Get probabilities from model
-            # print(preds)
+            preds, probabilities, losses = rtc_model(encoded_inputs)
+
+            # Note that for each pred, probabilities is a 3-element 1D tensor
+            # (since there are three labels), e.g. for a pred with label 1,
+            # we'd have a probabilities tensor of [0.3113, 0.6486, 0.0401]
+            # We want to keep the value corresponding with the pred (which is
+            # always the maximum value) as the probability (entailment score),
+            # in this case 0.6486
+            # `torch.max()` returns both values and indices; we only need values
+            # https://pytorch.org/docs/stable/generated/torch.max.html
+            # Also, since this is a batch operation, `probabilities` is a 2-D
+            # tensor, so we apply this with `dim=1`
+            # e.g. If we have (a batch of) probabilities
+            #   tensor([[0.3113, 0.6486, 0.0401],
+            #           [0.8971, 0.0873, 0.0157]], grad_fn=<SoftmaxBackward0>)
+            # then after running `torch.max()`, we get
+            #   tensor([0.6486, 0.8971], grad_fn=<MaxBackward0>)
+            # Note: This is equivalent to the following
+            # probabilities = [probabilities[i, preds[i]] for i in range(len(preds))]
+            probabilities = torch.max(probabilities, dim=1).values
 
             for i, target in enumerate(targets_batch):
                 if (preds[i] == int(RelationshipType.SUPPORTS)

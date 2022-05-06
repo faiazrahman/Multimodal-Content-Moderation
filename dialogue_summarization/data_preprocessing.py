@@ -68,7 +68,7 @@ def preprocess_samsum_data(data_path: str):
     elif dataset_type == "val":
         save_path = SAMSUM_VAL_DATAFRAME_PATH
     else:
-        raise ValueError("preprocess_samsum_data")
+        raise ValueError("preprocess_samsum_data() received invalid data_path; Note that the data file names should be train.json, test.json, and val.json")
 
     df.to_pickle(save_path)
     print(f"> Saved to {save_path}")

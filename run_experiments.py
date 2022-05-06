@@ -130,6 +130,14 @@ def train_low_rank_fusion_text_image():
     run(f"python run_training.py --config configs/low_rank_fusion__text_image__3_class__mpnet_resnet.yaml --gpus {GPU_ID}")
     run(f"python run_training.py --config configs/low_rank_fusion__text_image__6_class__mpnet_resnet.yaml --gpus {GPU_ID}")
 
+def train_low_rank_fusion_text_image_dialogue():
+    """
+    text: mpnet + image: resnet + dialogue: RankSum-BART (fusion_method: low-rank)
+    """
+    run(f"python run_training.py --config configs/low_rank_fusion__text_image_dialogue__2_class__mpnet_resnet_bart.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/low_rank_fusion__text_image_dialogue__3_class__mpnet_resnet_bart.yaml --gpus {GPU_ID}")
+    run(f"python run_training.py --config configs/low_rank_fusion__text_image_dialogue__6_class__mpnet_resnet_bart.yaml --gpus {GPU_ID}")
+
 if __name__ == "__main__":
 
     # subprocess.call("python run_training.py --config configs/sampled_text_image_dialogue__2_class__mpnet_resnet_bart.yaml", shell=True)

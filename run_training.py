@@ -72,6 +72,7 @@ if __name__ == "__main__":
     parser.add_argument("--image_encoder", type=str, default=None, help="resnet | dino")
     parser.add_argument("--dino_model", type=str, default=None, help="facebook/dino-vits16 | facebook/dino-vits8 | facebook/dino-vitb16 | facebook/dino-vitb8")
     parser.add_argument("--dialogue_summarization_model", type=str, default=None, help="(Does NOT use in-house dialogue summarization) None=Transformers.Pipeline default i.e. sshleifer/distilbart-cnn-12-6 | bart-large-cnn | t5-small | t5-base | t5-large")
+    parser.add_argument("--fusion_method", type=str, default=None, help="early-fusion | low-rank")
     parser.add_argument("--train_data_path", type=str, default=None)
     parser.add_argument("--preprocessed_train_dataframe_path", type=str, default=None)
     parser.add_argument("--test_data_path", type=str, default=None)
@@ -105,6 +106,8 @@ if __name__ == "__main__":
         args.dino_model = config.get("dino_model", "facebook/dino-vitb16")
     if not args.dialogue_summarization_model:
         args.dialogue_summarization_model = config.get("dialogue_summarization_model", "bart-large-cnn")
+    if not args.fusion_method:
+        args.fusion_method = config.get("fusion_method", "early-fusion")
     if not args.train_data_path:
         args.train_data_path = config.get("train_data_path", os.path.join(DATA_PATH, "multimodal_train_" + str(TRAIN_DATA_SIZE) + ".tsv"))
     if not args.preprocessed_train_dataframe_path:
@@ -129,6 +132,7 @@ if __name__ == "__main__":
     print(f"image_encoder: {args.image_encoder}")
     if args.image_encoder == "dino": print(f"dino_model: {args.dino_model}")
     print(f"dialogue_summarization_model: {args.dialogue_summarization_model}")
+    print(f"fusion_method: {args.fusion_method}")
     print(f"train_data_path: {args.train_data_path}")
     print(f"preprocessed_train_dataframe_path: {args.preprocessed_train_dataframe_path}")
     print(f"test_data_path: {args.test_data_path}")
@@ -147,6 +151,7 @@ if __name__ == "__main__":
         "dropout_p": args.dropout_p,
         "fusion_output_size": args.fusion_output_size,
         "dino_model": args.dino_model,
+        "fusion_method": args.fusion_method,
 
         # For logging
         "model": args.model,

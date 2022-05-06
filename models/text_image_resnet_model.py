@@ -39,13 +39,26 @@ class TextImageResnetModel(nn.Module):
             fusion_output_size,
             dropout_p,
             hidden_size=512,
-            fusion_method="early-concat", # "early-concat" | "low-rank"
+            fusion_method="early-fusion", # "early-fusion" | "low-rank"
         ):
         super(TextImageResnetModel, self).__init__()
         self.text_module = text_module
         self.image_module = image_module
-        self.fusion = torch.nn.Linear(in_features=(text_feature_dim + image_feature_dim),
-            out_features=fusion_output_size)
+
+        self.fusion_method = fusion_method
+        self.fusion = None
+        if self.fusion_method == "early-fusion":
+            self.fusion = torch.nn.Linear(
+                in_features=(text_feature_dim + image_feature_dim),
+                out_features=fusion_output_size
+            )
+        elif self.fusion_method == "low-rank":
+            outer_product_dim = text_feature_dim * image_feature_dim
+            self.fusion = torch.nn.Linear(
+                in_features=outer_product_dim,
+                out_features=fusion_output_size
+            )
+
         # self.fc = torch.nn.Linear(in_features=fusion_output_size, out_features=num_classes)
         self.fc1 = torch.nn.Linear(in_features=fusion_output_size, out_features=hidden_size)
         self.fc2 = torch.nn.Linear(in_features=hidden_size, out_features=num_classes)
@@ -53,11 +66,31 @@ class TextImageResnetModel(nn.Module):
         self.dropout = torch.nn.Dropout(dropout_p)
 
     def forward(self, text, image, label):
+        """
+        Note that `fused` is the multi-modal embedding (i.e. after fusion)
+        """
         text_features = torch.nn.functional.relu(self.text_module(text))
         image_features = torch.nn.functional.relu(self.image_module(image))
-        combined = torch.cat([text_features, image_features], dim=1)
-        fused = self.dropout(
-            torch.nn.functional.relu(self.fusion(combined)))
+
+        fused = None
+        if self.fusion_method == "early-fusion":
+            # Concatenate uni-modal tensors and embed into `fusion_output_size` dimension
+            combined = torch.cat([text_features, image_features], dim=1)
+            fused = self.dropout(
+                torch.nn.functional.relu(self.fusion(combined)))
+        elif self.fusion_method == "low-rank":
+            # Compute outer product of uni-modal tensors and embed into `fusion_output_size` dimension
+            # Note: We use PyTorch's Einstein summation notation processor to
+            # compute the outer product
+            # To compute the outer product of two tensors A and B, the
+            # einsum notation is `torch.einsum('i,j->ij', A, B)`
+            # However, since pass training examples through our model in
+            # batches, we want to compute the outer product for pairs in
+            # the batch; thus, we maintain the batch dimension as follows
+            outer_product = torch.einsum('bi,bj->bij', text_features, image_features)
+            prefusion_input = torch.flatten(outer_product, start_dim=1)
+            fused = torch.nn.functional.relu(self.fusion(prefusion_input))
+
         # logits = self.fc(fused)
         hidden = torch.nn.functional.relu(self.fc1(fused))
         logits = self.fc2(hidden)
@@ -98,7 +131,8 @@ class TextImageResnetMMFNDModel(pl.LightningModule):
             text_feature_dim=self.text_feature_dim,
             image_feature_dim=self.image_feature_dim,
             fusion_output_size=self.hparams.get("fusion_output_size", 512),
-            dropout_p=self.hparams.get("dropout_p", DROPOUT_P)
+            dropout_p=self.hparams.get("dropout_p", DROPOUT_P),
+            fusion_method=self.hparams.get("fusion_method", "early-fusion")
         )
 
         # Metrics for evaluation

@@ -42,11 +42,23 @@ def train_text_baseline_roberta_mpnet():
     run(f"python run_training.py --config configs/text__3_class__mpnet.yaml --gpus {GPU_ID}")
     run(f"python run_training.py --config configs/text__6_class__mpnet.yaml --gpus {GPU_ID}")
 
+def eval_text_baseline_roberta_mpnet():
+    # NOTE: Make sure you specify the trained model version in the config (or pass it as --trained_model_version)
+    trained_model_version_numbers = [i for i in range(318, 324)] # [318, 323] inclusive
+    for version_number in trained_model_version_numbers:
+        run(f"python run_evaluation.py --trained_model_version {version_number} --gpus {GPU_ID}")
+
 def train_image_baseline_resnet():
     """ image: resnet """
     run(f"python run_training.py --config configs/image__2_class__resnet.yaml --gpus {GPU_ID}")
     run(f"python run_training.py --config configs/image__3_class__resnet.yaml --gpus {GPU_ID}")
     run(f"python run_training.py --config configs/image__6_class__resnet.yaml --gpus {GPU_ID}")
+
+def eval_image_baseline_resnet():
+    # NOTE: Make sure you specify the trained model version in the config (or pass it as --trained_model_version)
+    trained_model_version_numbers = [i for i in range(325, 328)] # [325, 327] inclusive
+    for version_number in trained_model_version_numbers:
+        run(f"python run_evaluation.py --trained_model_version {version_number} --gpus {GPU_ID}")
 
 def train_roberta_mpnet_resnet_bart_ranksum():
     """
@@ -89,4 +101,9 @@ if __name__ == "__main__":
     # TESTING OUT TEXT BASELINE MODEL
     # run(f"python run_training.py --config configs/text__2_class__mpnet.yaml --gpus {GPU_ID}")
 
-    train_text_baseline_roberta_mpnet()
+    # train_text_baseline_roberta_mpnet()
+    train_image_baseline_resnet()
+
+    # TODO FROM HERE
+    # eval_text_baseline_roberta_mpnet()
+    # eval_image_baseline_resnet()

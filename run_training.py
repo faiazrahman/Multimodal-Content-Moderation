@@ -163,6 +163,7 @@ if __name__ == "__main__":
         model = TextBaselineMMFNDModel(hparams)
     elif args.model == "image_resnet_baseline_model":
         model = ImageResnetBaselineMMFNDModel(hparams)
+        image_transform = ImageResnetBaselineMMFNDModel.build_image_transform()
     elif args.model == "text_image_resnet_model":
         model = TextImageResnetMMFNDModel(hparams)
         image_transform = TextImageResnetMMFNDModel.build_image_transform()

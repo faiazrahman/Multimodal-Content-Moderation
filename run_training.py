@@ -16,6 +16,7 @@ from sentence_transformers import SentenceTransformer
 from dataloader import MultimodalDataset, Modality
 from models.callbacks import PrintCallback
 from models.text_baseline_model import TextBaselineMMFNDModel
+from models.image_resnet_baseline_model import ImageResnetBaselineMMFNDModel
 from models.text_image_resnet_model import TextImageResnetMMFNDModel
 from models.text_image_resnet_dialogue_summarization_model import TextImageResnetDialogueSummarizationMMFNDModel
 
@@ -160,6 +161,8 @@ if __name__ == "__main__":
 
     if args.model == "text_baseline_model":
         model = TextBaselineMMFNDModel(hparams)
+    elif args.model == "image_resnet_baseline_model":
+        model = ImageResnetBaselineMMFNDModel(hparams)
     elif args.model == "text_image_resnet_model":
         model = TextImageResnetMMFNDModel(hparams)
         image_transform = TextImageResnetMMFNDModel.build_image_transform()

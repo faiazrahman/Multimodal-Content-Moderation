@@ -15,7 +15,7 @@ import itertools
 
 from run_experiments import run
 
-GPU_ID = 6
+GPU_ID = 5
 
 def hyperparameter_tuning_auc():
     # Hyperparameter tuning for AUC with {BERT, RoBERTA}
@@ -58,7 +58,7 @@ def run_best_rtc():
 
 if __name__ == "__main__":
 
-    hyperparameter_tuning_auc()
-    # hyperparameter_tuning_rtc()
+    # hyperparameter_tuning_auc()
+    hyperparameter_tuning_rtc()
 
     # run_best_rtc()

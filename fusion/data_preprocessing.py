@@ -145,6 +145,8 @@ def preprocess_mmhs_data(
     else:
         raise ValueError("preprocess_mmhs_data() received invalid split_type; should be train, test, or val")
 
+    # Reset index (since some rows were dropped) and save
+    df.reset_index(drop=True, inplace=True)
     df.to_pickle(save_path)
     print(f"> Saved to {save_path}")
 

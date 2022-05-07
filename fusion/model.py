@@ -14,7 +14,7 @@ import transformers
 from sentence_transformers import SentenceTransformer
 
 # NOTE: These should be initialized in the calling script
-NUM_CLASSES = 2
+NUM_CLASSES = 6
 LEARNING_RATE = 1e-4
 DROPOUT_P = 0.1
 
@@ -26,37 +26,36 @@ LOW_RANK_TENSOR_FUSION_REDUCTION_DIM = 50
 
 losses = []
 
-logging.basicConfig(level=logging.INFO) # DEBUG, INFO, WARNING, ERROR, CRITICAL
+logging.basicConfig(level=logging.INFO)
 
 print("CUDA available:", torch.cuda.is_available())
 
-class TextImageResnetDialogueSummarizationModel(nn.Module):
-
+class TextImageResnetOcrModel(nn.Module):
     def __init__(
-            self,
-            num_classes,
-            loss_fn,
-            text_module,
-            image_module,
-            dialogue_module,
-            text_feature_dim,
-            image_feature_dim,
-            dialogue_feature_dim,
-            fusion_output_size,
-            dropout_p,
-            hidden_size=512,
-            fusion_method="early-fusion", # "early-fusion" | "low-rank"
-        ):
-        super(TextImageResnetDialogueSummarizationModel, self).__init__()
+        self,
+        num_classes,
+        loss_fn,
+        text_module, # Takes sentence-transformer embedding and generates text features
+        image_module,
+        ocr_module,
+        text_feature_dim,
+        image_feature_dim,
+        ocr_feature_dim,
+        fusion_output_size,
+        dropout_p,
+        hidden_size=512,
+        fusion_method="early-fusion", # "early-fusion" | "low-rank"
+    ):
+        super(TextImageResnetOcrModel, self).__init__()
         self.text_module = text_module
         self.image_module = image_module
-        self.dialogue_module = dialogue_module
+        self.ocr_module = ocr_module
 
         self.fusion_method = fusion_method
         self.fusion = None
         if self.fusion_method == "early-fusion":
             self.fusion = torch.nn.Linear(
-                in_features=(text_feature_dim + image_feature_dim + dialogue_feature_dim),
+                in_features=(text_feature_dim + image_feature_dim + ocr_feature_dim),
                 out_features=fusion_output_size
             )
         elif self.fusion_method == "low-rank":
@@ -71,39 +70,42 @@ class TextImageResnetDialogueSummarizationModel(nn.Module):
                 in_features=image_feature_dim,
                 out_features=LOW_RANK_TENSOR_FUSION_REDUCTION_DIM
             )
-            self.dialogue_dim_reduction = torch.nn.Linear(
-                in_features=dialogue_feature_dim,
+            self.ocr_dim_reduction = torch.nn.Linear(
+                in_features=ocr_feature_dim,
                 out_features=LOW_RANK_TENSOR_FUSION_REDUCTION_DIM
             )
 
             # Then, we will embed the outer product
-            # outer_product_dim = text_feature_dim * image_feature_dim * dialogue_feature_dim
+            # outer_product_dim = text_feature_dim * image_feature_dim * ocr_feature_dim
             outer_product_dim = LOW_RANK_TENSOR_FUSION_REDUCTION_DIM * LOW_RANK_TENSOR_FUSION_REDUCTION_DIM * LOW_RANK_TENSOR_FUSION_REDUCTION_DIM
             self.fusion = torch.nn.Linear(
                 in_features=outer_product_dim,
                 out_features=fusion_output_size
             )
 
-        # self.fc = torch.nn.Linear(in_features=fusion_output_size, out_features=num_classes)
-        self.fc1 = torch.nn.Linear(in_features=fusion_output_size, out_features=hidden_size) # trial
-        self.fc2 = torch.nn.Linear(in_features=hidden_size, out_features=num_classes) # trial
+        self.fc1 = torch.nn.Linear(in_features=fusion_output_size, out_features=hidden_size)
+        self.fc2 = torch.nn.Linear(in_features=hidden_size, out_features=num_classes)
         self.loss_fn = loss_fn
         self.dropout = torch.nn.Dropout(dropout_p)
 
-    def forward(self, text, image, dialogue, label):
+    def forward(self, encoded_text, image, encoded_ocr, label):
         """
         Note that `fused` is the multi-modal embedding (i.e. after fusion)
+
+        Note that this expects that the text and ocr have already been encoded
+        by sentence-transformers
         """
-        text_features = torch.nn.functional.relu(self.text_module(text))
+        text_features = torch.nn.functional.relu(self.text_module(encoded_text))
         image_features = torch.nn.functional.relu(self.image_module(image))
-        dialogue_features = torch.nn.functional.relu(self.dialogue_module(dialogue))
+        ocr_features = torch.nn.functional.relu(self.text_module(encoded_ocr))
 
         fused = None
         if self.fusion_method == "early-fusion":
             # Concatenate uni-modal tensors and embed into `fusion_output_size` dimension
-            combined = torch.cat([text_features, image_features, dialogue_features], dim=1)
+            combined = torch.cat([text_features, image_features, ocr_features], dim=1)
             fused = self.dropout(
-                torch.nn.functional.relu(self.fusion(combined)))
+                torch.nn.functional.relu(self.fusion(combined))
+            )
         elif self.fusion_method == "low-rank":
             # Reduce dimensionality of uni-modal tensor representations
             # This is necessary since computing the outer product of three
@@ -112,7 +114,7 @@ class TextImageResnetDialogueSummarizationModel(nn.Module):
             # exceed available CUDA memory, even with lower batch sizes
             text_features = torch.nn.functional.relu(self.text_dim_reduction(text_features))
             image_features = torch.nn.functional.relu(self.image_dim_reduction(image_features))
-            dialogue_features = torch.nn.functional.relu(self.dialogue_dim_reduction(dialogue_features))
+            ocr_features = torch.nn.functional.relu(self.ocr_dim_reduction(ocr_features))
 
             # Compute outer product of uni-modal tensors and embed into `fusion_output_size` dimension
             # Note: We use PyTorch's Einstein summation notation processor to
@@ -123,13 +125,12 @@ class TextImageResnetDialogueSummarizationModel(nn.Module):
             # However, since we pass training examples through our model in
             # batches, we want to compute the outer product for triples in
             # the batch; thus, we maintain the batch dimension as follows
-            outer_product = torch.einsum('bi,bj,bk->bijk', text_features, image_features, dialogue_features)
+            outer_product = torch.einsum('bi,bj,bk->bijk', text_features, image_features, ocr_features)
             prefusion_input = torch.flatten(outer_product, start_dim=1)
             fused = torch.nn.functional.relu(self.fusion(prefusion_input))
 
-        # logits = self.fc(fused)
-        hidden = torch.nn.functional.relu(self.fc1(fused)) # trial # TODO rm trial comments
-        logits = self.fc2(hidden) # trial
+        hidden = torch.nn.functional.relu(self.fc1(fused))
+        logits = self.fc2(hidden)
 
         # nn.CrossEntropyLoss expects raw logits as model output, NOT torch.nn.functional.softmax(logits, dim=1)
         # https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html
@@ -138,40 +139,41 @@ class TextImageResnetDialogueSummarizationModel(nn.Module):
 
         return (pred, loss)
 
-class TextImageResnetDialogueSummarizationMMFNDModel(pl.LightningModule):
+
+class TextImageResnetOcrMMHSModel(pl.LightningModule):
 
     def __init__(self, hparams=None):
-        super(TextImageResnetDialogueSummarizationMMFNDModel, self).__init__()
+        super(TextImageResnetOcrMMHSModel, self).__init__()
         if hparams:
             # Cannot reassign self.hparams in pl.LightningModule; must use update()
             # https://github.com/PyTorchLightning/pytorch-lightning/discussions/7525
             self.hparams.update(hparams)
 
-        self.embedding_dim = self.hparams.get("embedding_dim", 768)
+        self.embedding_dim = self.hparams.get("embedding_dim", 768) # text embedding dim (Sentence Transformer)
         self.text_feature_dim = self.hparams.get("text_feature_dim", 300)
         self.image_feature_dim = self.hparams.get("image_feature_dim", self.text_feature_dim)
-        self.dialogue_feature_dim = self.hparams.get("dialogue_feature_dim", self.text_feature_dim)
+        self.ocr_feature_dim = self.hparams.get("ocr_feature_dim", self.text_feature_dim)
 
         text_module = torch.nn.Linear(
             in_features=self.embedding_dim, out_features=self.text_feature_dim)
+
+        ocr_module = torch.nn.Linear(
+            in_features=self.embedding_dim, out_features=self.ocr_feature_dim)
 
         image_module = torchvision.models.resnet152(pretrained=True)
         # Overwrite last layer to get features (rather than classification)
         image_module.fc = torch.nn.Linear(
             in_features=RESNET_OUT_DIM, out_features=self.image_feature_dim)
 
-        dialogue_module = torch.nn.Linear(
-            in_features=self.embedding_dim, out_features=self.dialogue_feature_dim)
-
-        self.model = TextImageResnetDialogueSummarizationModel(
-            num_classes=self.hparams.get("num_classes", NUM_CLASSES),
+        self.model = TextImageResnetOcrModel(
+            num_classes=NUM_CLASSES,
             loss_fn=torch.nn.CrossEntropyLoss(),
             text_module=text_module,
             image_module=image_module,
-            dialogue_module=dialogue_module,
+            ocr_module=ocr_module,
             text_feature_dim=self.text_feature_dim,
             image_feature_dim=self.image_feature_dim,
-            dialogue_feature_dim=self.dialogue_feature_dim,
+            ocr_feature_dim=self.ocr_feature_dim,
             fusion_output_size=self.hparams.get("fusion_output_size", 512),
             dropout_p=self.hparams.get("dropout_p", DROPOUT_P),
             fusion_method=self.hparams.get("fusion_method", "early-fusion")
@@ -188,7 +190,7 @@ class TextImageResnetDialogueSummarizationMMFNDModel(pl.LightningModule):
         self.f1_score = torchmetrics.F1Score()
         self.confusion_matrix = torchmetrics.ConfusionMatrix(
             # ConfusionMatrix() takes a required positional argument: num_classes
-            self.hparams.get("num_classes", NUM_CLASSES)
+            NUM_CLASSES
         )
 
         # When reloading the model for evaluation, we will need the
@@ -196,18 +198,18 @@ class TextImageResnetDialogueSummarizationMMFNDModel(pl.LightningModule):
         self.save_hyperparameters()
 
     # Required for pl.LightningModule
-    def forward(self, text, image, dialogue, label):
+    def forward(self, text, image, ocr, label):
         # pl.Lightning convention: forward() defines prediction for inference
-        return self.model(text, image, dialogue, label)
+        return self.model(text, image, ocr, label)
 
     # Required for pl.LightningModule
     def training_step(self, batch, batch_idx):
         global losses
         # pl.Lightning convention: training_step() defines prediction and
         # accompanying loss for training, independent of forward()
-        text, image, dialogue, label = batch["text"], batch["image"], batch["dialogue"], batch["label"]
+        text, image, ocr, label = batch["text"], batch["image"], batch["image_ocr_text"], batch["label"]
 
-        pred, loss = self.model(text, image, dialogue, label)
+        pred, loss = self.model(text, image, ocr, label)
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         print(loss.item())
         losses.append(loss.item())
@@ -225,8 +227,8 @@ class TextImageResnetDialogueSummarizationMMFNDModel(pl.LightningModule):
 
     # Optional for pl.LightningModule
     def test_step(self, batch, batch_idx):
-        text, image, dialogue, label = batch["text"], batch["image"], batch["dialogue"], batch["label"]
-        pred, loss = self.model(text, image, dialogue, label)
+        text, image, ocr, label = batch["text"], batch["image"], batch["image_ocr_text"], batch["label"]
+        pred, loss = self.model(text, image, ocr, label)
         pred_label = torch.argmax(pred, dim=1)
         accuracy = torch.sum(pred_label == label).item() / (len(label) * 1.0) # TODO deprecate
 

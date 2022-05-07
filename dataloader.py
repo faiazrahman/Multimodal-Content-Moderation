@@ -36,6 +36,12 @@ class Modality(enum.Enum):
     TEXT_IMAGE = "text-image"
     TEXT_IMAGE_DIALOGUE = "text-image-dialogue"
 
+    # For multi-modal hate speech detection, we also include OCR
+    # - Note that `ocr` refers to text within an image, which is stored in a
+    #   string after running Optical Character Recognition
+    IMAGE_OCR = "image-ocr"
+    TEXT_IMAGE_OCR = "text-image-ocr"
+
 class MultimodalDataset(Dataset):
     """
     torch.utils.data.Dataset which supports data for the following modalities:
@@ -62,7 +68,7 @@ class MultimodalDataset(Dataset):
         modality=None,
         text_embedder=None,
         image_transform=None,
-        image_encoder=None,
+        image_encoder=None, # TODO rm, not actually used
         dialogue_method="ranksum", # "graphlin" | "argsum"
         summarization_model=None, # Transformers pipeline model for ranksum and argsum
         num_classes=2,

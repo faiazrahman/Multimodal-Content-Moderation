@@ -1,0 +1,16 @@
+model: "text_image_resnet_ocr_mmhs_model" # The exact filename that the model is stored in, excluding the .py extension
+modality: "text-image-ocr"
+batch_size: 32 # 64 # (int) Increase this as much as you can to maximize GPU utilization without exceeding CUDA memory
+learning_rate: 1.0e-4 # (float) Note that the mantissa must have a decimal point to be parsed by YAML as a float (and not a str)
+num_epochs: 2 # (int)
+dropout_p: 0.1 # (float)
+fusion_output_size: 512 # (int) Dimension after multi-modal embeddings fusion
+gpus: [5] # [0] | [1] | [0, 1] Note that it must be a list of ints
+num_cpus: 0 # 0 for no multi-processing (during dataset batching), 24 for Yale Tangra server, 40 for Yale Ziva server
+text_embedder: "all-mpnet-base-v2" # "all-mpnet-base-v2" | "all-distilroberta-v1"
+image_encoder: "resnet" # "resnet" | "dino"
+fusion_method: "low-rank"
+preprocessed_train_dataframe_path: "./data/MMHS150K/mmhs_train_dataframe.pkl" # (str)
+preprocessed_test_dataframe_path: "./data/MMHS150K/mmhs_test_dataframe.pkl" # (str)
+trained_model_version: 0 # (int)
+trained_model_path: null # (str) Not needed if you specify trained_model_version and it's in lightning_logs/

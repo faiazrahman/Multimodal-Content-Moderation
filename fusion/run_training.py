@@ -85,7 +85,7 @@ if __name__ == "__main__":
             config = yaml.safe_load(yaml_file)
 
     # Defaults specified here, if not specified by command-line arg or config
-    if not args.model: args.model = config.get("model", "text_image_resnet_ocr_model")
+    if not args.model: args.model = config.get("model", "text_image_resnet_ocr_mmhs_model")
     if not args.modality: args.modality = config.get("modality", "text-image-ocr")
     if not args.batch_size: args.batch_size = config.get("batch_size", 32)
     if not args.learning_rate: args.learning_rate = config.get("learning_rate", 1e-4)
@@ -156,7 +156,7 @@ if __name__ == "__main__":
     text_embedder = SentenceTransformer(args.text_embedder)
     image_transform = None
 
-    if args.model == "text_image_resnet_ocr_model":
+    if args.model == "text_image_resnet_ocr_mmhs_model":
         model = TextImageResnetOcrMMHSModel(hparams)
         image_transform = TextImageResnetOcrMMHSModel.build_image_transform()
     else:

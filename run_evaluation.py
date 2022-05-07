@@ -94,9 +94,8 @@ if __name__ == "__main__":
         args.text_embedder = hparams_config.get("text_embedder", None)
         args.image_encoder = hparams_config.get("image_encoder", None)
         if args.image_encoder == "dino": args.dino_model = hparams_config.get("dino_model", None)
-        args.dialogue_method = hparams_config.get("dialogue_method", None)
-        if args.dialogue_method == "ranksum" or args.dialogue_method == "argsum":
-            args.dialogue_summarization_model = hparams_config.get("dialogue_summarization_model", None)
+        args.dialogue_method = hparams_config.get("dialogue_method", "ranksum")
+        args.dialogue_summarization_model = hparams_config.get("dialogue_summarization_model", None)
         args.fusion_method = hparams_config.get("fusion_method", None)
         args.test_data_path = hparams_config.get("test_data_path", None)
         args.preprocessed_test_dataframe_path = hparams_config.get("preprocessed_test_dataframe_path", None)
@@ -114,8 +113,7 @@ if __name__ == "__main__":
         args.image_encoder = config.get("image_encoder", "resnet")
         if args.image_encoder == "dino": args.dino_model = config.get("dino_model", None)
         args.dialogue_method = config.get("dialogue_method", "ranksum")
-        if args.dialogue_method == "ranksum" or args.dialogue_method == "argsum":
-            args.dialogue_summarization_model = config.get("dialogue_summarization_model", "bart-large-cnn")
+        args.dialogue_summarization_model = config.get("dialogue_summarization_model", "bart-large-cnn")
         args.fusion_method = config.get("fusion_method", "early-fusion")
 
         args.trained_model_version = config.get("trained_model_version", None)

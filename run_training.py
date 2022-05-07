@@ -156,6 +156,7 @@ if __name__ == "__main__":
         "dropout_p": args.dropout_p,
         "fusion_output_size": args.fusion_output_size,
         "dino_model": args.dino_model,
+        "dialogue_method": args.dialogue_method,
         "fusion_method": args.fusion_method,
 
         # For logging

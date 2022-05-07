@@ -10,6 +10,7 @@ gpus: [0, 1] # [0] | [1] | [0, 1] Note that it must be a list of ints
 num_cpus: 0 # 0 for no multi-processing (during dataset batching), 24 for Yale Tangra server, 40 for Yale Ziva server
 text_embedder: "all-mpnet-base-v2" # "all-mpnet-base-v2" | "all-distilroberta-v1"
 image_encoder: "resnet" # "resnet" | "dino"
+dialogue_method: "argsum" # "ranksum" | "graphlin" | "argsum"
 dialogue_summarization_model: "sshleifer/distilbart-cnn-12-6" # None=Transformers.Pipeline default i.e. "sshleifer/distilbart-cnn-12-6" | "bart-large-cnn" | "t5-small" | "t5-base" | "t5-large"
 train_data_path: "./data/Fakeddit/multimodal_train_10000.tsv" # (str)
 test_data_path: "./data/Fakeddit/multimodal_test_1000.tsv" # (str)

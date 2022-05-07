@@ -3,7 +3,7 @@ import sys
 import subprocess
 from datetime import datetime
 
-GPU_ID = 7  # Can specify multiple as a comma-separated string, e.g. "0,1"
+GPU_ID = 2  # Can specify multiple as a comma-separated string, e.g. "0,1"
 LOGS_DIR = "logs"
 
 def run(command: str, log_prefix: str = ""):
@@ -169,9 +169,6 @@ if __name__ == "__main__":
     # subprocess.call("python run_training.py --config configs/sampled_text_image_dialogue__2_class__mpnet_resnet_bart.yaml", shell=True)
     # run("python run_training.py --only_check_args --config configs/sampled_text_image_dialogue__2_class__mpnet_resnet_bart.yaml")
 
-    # train_graphlin_mpnet_resnet_bart()
-    # train_argsum_mpnet_resnet_bart()
-
     # TESTING OUT TEXT BASELINE MODEL
     # run(f"python run_training.py --config configs/text__2_class__mpnet.yaml --gpus {GPU_ID}")
 
@@ -187,7 +184,12 @@ if __name__ == "__main__":
     # train_low_rank_fusion_text_image()
     # train_low_rank_fusion_text_image_dialogue()
 
-    eval_roberta_mpnet_dino()
-    eval_roberta_mpnet_dino_bart_ranksum()
-    eval_low_rank_fusion_text_image()
-    eval_low_rank_fusion_text_image_dialogue()
+    # eval_roberta_mpnet_dino()
+    # eval_roberta_mpnet_dino_bart_ranksum()
+    # eval_low_rank_fusion_text_image()
+    # eval_low_rank_fusion_text_image_dialogue()
+
+    # ::DONE TILL HERE
+
+    train_graphlin_mpnet_resnet_bart()
+    train_argsum_mpnet_resnet_bart()

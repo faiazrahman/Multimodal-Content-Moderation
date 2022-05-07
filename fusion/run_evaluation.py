@@ -1,3 +1,11 @@
+"""
+Run (from root)
+```
+python -m fusion.run_evaluation [--args]
+```
+"""
+
+from cgitb import text
 import os
 import logging
 import argparse
@@ -13,14 +21,9 @@ from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
 
 from sentence_transformers import SentenceTransformer
 
-from dataloader import MultimodalDataset, Modality
 from models.callbacks import PrintCallback
-from models.text_baseline_model import TextBaselineMMFNDModel
-from models.image_resnet_baseline_model import ImageResnetBaselineMMFNDModel
-from models.text_image_resnet_model import TextImageResnetMMFNDModel
-from models.text_image_dino_model import TextImageDinoMMFNDModel
-from models.text_image_resnet_dialogue_summarization_model import TextImageResnetDialogueSummarizationMMFNDModel
-from models.text_image_dino_dialogue_summarization_model import TextImageDinoDialogueSummarizationMMFNDModel
+from fusion.dataloader import MMHSDataset
+from fusion.model import TextImageResnetOcrMMHSModel
 from utils import get_checkpoint_filename_from_dir
 
 # Multiprocessing for dataset batching
@@ -32,14 +35,16 @@ DEFAULT_NUM_CPUS = 0
 # torch.multiprocessing.set_start_method('spawn')
 
 PL_ASSETS_PATH = "./lightning_logs"
-DATA_PATH = "./data/Fakeddit"
-IMAGES_DIR = os.path.join(DATA_PATH, "images")
-TRAIN_DATA_SIZE = 10000
-TEST_DATA_SIZE = 1000
+DATA_PATH = "./data"
+MMHS_DATA_PATH = os.path.join(DATA_PATH, "MMHS150K")
+MMHS_TRAIN_DATAFRAME_PATH = os.path.join(MMHS_DATA_PATH, "mmhs_train_dataframe.pkl")
+MMHS_TEST_DATAFRAME_PATH = os.path.join(MMHS_DATA_PATH, "mmhs_test_dataframe.pkl")
+MMHS_VAL_DATAFRAME_PATH = os.path.join(MMHS_DATA_PATH, "mmhs_val_dataframe.pkl")
+
 SENTENCE_TRANSFORMER_EMBEDDING_DIM = 768
 DEFAULT_GPUS = [0, 1]
 
-logging.basicConfig(level=logging.INFO) # DEBUG, INFO, WARNING, ERROR, CRITICAL
+logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
     # torch.multiprocessing.set_start_method('spawn')
@@ -85,7 +90,6 @@ if __name__ == "__main__":
             hparams_config = yaml.safe_load(yaml_file)
         args.model = hparams_config.get("model", None)
         args.modality = hparams_config.get("modality", None)
-        args.num_classes = hparams_config.get("num_classes", None)
         original_batch_size = hparams_config.get("batch_size", None)
         args.learning_rate = hparams_config.get("learning_rate", None)
         args.num_epochs = hparams_config.get("num_epochs", None)
@@ -94,39 +98,28 @@ if __name__ == "__main__":
         args.text_embedder = hparams_config.get("text_embedder", None)
         args.image_encoder = hparams_config.get("image_encoder", None)
         if args.image_encoder == "dino": args.dino_model = hparams_config.get("dino_model", None)
-        args.dialogue_method = hparams_config.get("dialogue_method", None)
-        if args.dialogue_method == "ranksum" or args.dialogue_method == "argsum":
-            args.dialogue_summarization_model = hparams_config.get("dialogue_summarization_model", None)
         args.fusion_method = hparams_config.get("fusion_method", None)
-        args.test_data_path = hparams_config.get("test_data_path", None)
+        args.preprocessed_train_dataframe_path = hparams_config.get("preprocessed_train_dataframe_path", None)
         args.preprocessed_test_dataframe_path = hparams_config.get("preprocessed_test_dataframe_path", None)
     else:
         # Otherwise, load the hparams from the specified config file
-        args.model = config.get("model", "text_image_resnet_model")
-        args.modality = config.get("modality", "text-image")
-        args.num_classes = config.get("num_classes", 2)
+        args.model = config.get("model", "text_image_resnet_ocr_mmhs_model")
+        args.modality = config.get("modality", "text-image-ocr")
         original_batch_size = config.get("batch_size", 32)
         args.learning_rate = config.get("learning_rate", 1e-4)
-        args.num_epochs = config.get("num_epochs", 10)
+        args.num_epochs = config.get("num_epochs", 5)
         args.dropout_p = config.get("dropout_p", 0.1)
         args.fusion_output_size = config.get("fusion_output_size", 512)
         args.text_embedder = config.get("text_embedder", "all-mpnet-base-v2")
         args.image_encoder = config.get("image_encoder", "resnet")
-        if args.image_encoder == "dino": args.dino_model = config.get("dino_model", None)
-        args.dialogue_method = config.get("dialogue_method", "ranksum")
-        if args.dialogue_method == "ranksum" or args.dialogue_method == "argsum":
-            args.dialogue_summarization_model = config.get("dialogue_summarization_model", "bart-large-cnn")
+        if args.image_encoder == "dino": args.dino_model = config.get("dino_model", "facebook/dino-vitb16")
         args.fusion_method = config.get("fusion_method", "early-fusion")
-
-        args.trained_model_version = config.get("trained_model_version", None)
-        args.trained_model_path = config.get("trained_model_path", None)
-        args.test_data_path = config.get("test_data_path", os.path.join(DATA_PATH, "multimodal_test_" + str(TEST_DATA_SIZE) + ".tsv"))
-        args.preprocessed_test_dataframe_path = config.get("preprocessed_test_dataframe_path", None)
+        args.preprocessed_train_dataframe_path = config.get("preprocessed_train_dataframe_path", MMHS_TRAIN_DATAFRAME_PATH)
+        args.preprocessed_test_dataframe_path = config.get("preprocessed_test_dataframe_path", MMHS_TEST_DATAFRAME_PATH)
 
     print(f"Running evaluation with batch_size={args.batch_size} for a model with the following configuration...")
     print(f"model: {args.model}")
     print(f"modality: {args.modality}")
-    print(f"num_classes: {args.num_classes}")
     print(f"batch_size: {original_batch_size}")
     print(f"learning_rate: {args.learning_rate}")
     print(f"num_epochs: {args.num_epochs}")
@@ -137,11 +130,8 @@ if __name__ == "__main__":
     print(f"text_embedder: {args.text_embedder}")
     print(f"image_encoder: {args.image_encoder}")
     if args.image_encoder == "dino": print(f"dino_model: {args.dino_model}")
-    print(f"dialogue_method: {args.dialogue_method}")
-    if args.dialogue_method == "ranksum" or args.dialogue_method == "argsum":
-        print(f"dialogue_summarization_model: {args.dialogue_summarization_model}")
     print(f"fusion_method: {args.fusion_method}")
-    print(f"test_data_path: {args.test_data_path}")
+    print(f"preprocessed_train_dataframe_path: {args.preprocessed_train_dataframe_path}")
     print(f"preprocessed_test_dataframe_path: {args.preprocessed_test_dataframe_path}")
 
     if args.only_check_args:
@@ -171,38 +161,21 @@ if __name__ == "__main__":
     text_embedder = SentenceTransformer(args.text_embedder)
     image_transform = None
 
-    if args.model == "text_baseline_model":
-        model = TextBaselineMMFNDModel.load_from_checkpoint(checkpoint_path)
-    elif args.model == "image_resnet_baseline_model":
-        model = ImageResnetBaselineMMFNDModel.load_from_checkpoint(checkpoint_path)
-        image_transform = ImageResnetBaselineMMFNDModel.build_image_transform()
-    elif args.model == "text_image_resnet_model":
-        model = TextImageResnetMMFNDModel.load_from_checkpoint(checkpoint_path)
-        image_transform = TextImageResnetMMFNDModel.build_image_transform()
-    elif args.model == "text_image_dino_model":
-        model = TextImageDinoMMFNDModel.load_from_checkpoint(checkpoint_path)
-        image_transform = TextImageDinoMMFNDModel.build_image_transform()
-    elif args.model == "text_image_resnet_dialogue_summarization_model":
-        model = TextImageResnetDialogueSummarizationMMFNDModel.load_from_checkpoint(checkpoint_path)
-        image_transform = TextImageResnetDialogueSummarizationMMFNDModel.build_image_transform()
-    elif args.model == "text_image_dino_dialogue_summarization_model":
-        model = TextImageDinoDialogueSummarizationMMFNDModel.load_from_checkpoint(checkpoint_path)
-        image_transform = TextImageDinoDialogueSummarizationMMFNDModel.build_image_transform()
+    if args.model == "text_image_resnet_ocr_mmhs_model":
+        model = TextImageResnetOcrMMHSModel.load_from_checkpoint(checkpoint_path)
+        image_transform = TextImageResnetOcrMMHSModel.build_image_transform()
     else:
-        raise Exception("run_evaluation.py: Must pass a valid --model name to evaluate")
+        raise ValueError("fusion/run_evaluationg.py: Must pass a valid --model name to evaluate")
 
     print(text_embedder)
     print(image_transform)
 
-    test_dataset = MultimodalDataset(
-        from_preprocessed_dataframe=args.preprocessed_test_dataframe_path,
-        data_path=args.test_data_path,
+    test_dataset = MMHSDataset(
+        from_dataframe_pkl_path=args.preprocessed_test_dataframe_path,
+        dataset_type="test",
         modality=args.modality,
         text_embedder=text_embedder,
-        image_transform=image_transform,
-        dialogue_method=args.dialogue_method,
-        summarization_model=args.dialogue_summarization_model,
-        num_classes=args.num_classes
+        image_transform=image_transform
     )
     logging.info("Test dataset size: {}".format(len(test_dataset)))
     logging.info(test_dataset)

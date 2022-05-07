@@ -72,6 +72,7 @@ if __name__ == "__main__":
     parser.add_argument("--image_encoder", type=str, default=None, help="resnet | dino")
     parser.add_argument("--dino_model", type=str, default=None, help="facebook/dino-vits16 | facebook/dino-vits8 | facebook/dino-vitb16 | facebook/dino-vitb8")
     parser.add_argument("--dialogue_summarization_model", type=str, default=None, help="(Does NOT use in-house dialogue summarization) None=Transformers.Pipeline default i.e. sshleifer/distilbart-cnn-12-6 | bart-large-cnn | t5-small | t5-base | t5-large")
+    parser.add_argument("--dialogue_method", type=str, default=None, help="ranksum | graphlin | argsum")
     parser.add_argument("--fusion_method", type=str, default=None, help="early-fusion | low-rank")
     parser.add_argument("--train_data_path", type=str, default=None)
     parser.add_argument("--preprocessed_train_dataframe_path", type=str, default=None)
@@ -104,6 +105,8 @@ if __name__ == "__main__":
         args.image_encoder = config.get("image_encoder", "resnet")
     if not args.dino_model and args.image_encoder == "dino":
         args.dino_model = config.get("dino_model", "facebook/dino-vitb16")
+    if not args.dialogue_method:
+        args.dialogue_method = config.get("dialogue_method", "ranksum")
     if not args.dialogue_summarization_model:
         args.dialogue_summarization_model = config.get("dialogue_summarization_model", "bart-large-cnn")
     if not args.fusion_method:
@@ -131,7 +134,9 @@ if __name__ == "__main__":
     print(f"text_embedder: {args.text_embedder}")
     print(f"image_encoder: {args.image_encoder}")
     if args.image_encoder == "dino": print(f"dino_model: {args.dino_model}")
-    print(f"dialogue_summarization_model: {args.dialogue_summarization_model}")
+    print(f"dialogue_method: {args.dialogue_method}")
+    if args.dialogue_method == "ranksum" or args.dialogue_method == "argsum":
+        print(f"dialogue_summarization_model: {args.dialogue_summarization_model}")
     print(f"fusion_method: {args.fusion_method}")
     print(f"train_data_path: {args.train_data_path}")
     print(f"preprocessed_train_dataframe_path: {args.preprocessed_train_dataframe_path}")
@@ -201,6 +206,7 @@ if __name__ == "__main__":
         text_embedder=text_embedder,
         image_transform=image_transform,
         summarization_model=args.dialogue_summarization_model,
+        dialogue_method=args.dialogue_method,
         num_classes=args.num_classes
     )
     logging.info("Train dataset size: {}".format(len(train_dataset)))

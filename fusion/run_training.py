@@ -3,10 +3,6 @@ Run (from root)
 ```
 python -m fusion.run_training [--args]
 ```
-
-```
-python -m fusion.run_training --only_check_args
-```
 """
 
 import os

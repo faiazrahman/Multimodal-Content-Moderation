@@ -3,7 +3,7 @@ import sys
 import subprocess
 from datetime import datetime
 
-GPU_ID = 7  # Can specify multiple as a comma-separated string, e.g. "0,1"
+GPU_ID = 6  # Can specify multiple as a comma-separated string, e.g. "0,1"
 LOGS_DIR = "logs"
 
 def run(command: str, log_prefix: str = ""):

@@ -20,6 +20,10 @@ DROPOUT_P = 0.1
 
 RESNET_OUT_DIM = 2048
 
+# For low-rank fusion (of three modalities, i.e. computing the outer product of
+# three tensors), only
+LOW_RANK_TENSOR_FUSION_REDUCTION_DIM = 50
+
 losses = []
 
 logging.basicConfig(level=logging.INFO) # DEBUG, INFO, WARNING, ERROR, CRITICAL
@@ -56,7 +60,25 @@ class TextImageResnetDialogueSummarizationModel(nn.Module):
                 out_features=fusion_output_size
             )
         elif self.fusion_method == "low-rank":
-            outer_product_dim = text_feature_dim * image_feature_dim * dialogue_feature_dim
+            # We must reduce dimensionality of the uni-modal embeddings,
+            # otherwise the outer product will be too large and thus exceed
+            # available CUDA memory
+            self.text_dim_reduction = torch.nn.Linear(
+                in_features=text_feature_dim,
+                out_features=LOW_RANK_TENSOR_FUSION_REDUCTION_DIM
+            )
+            self.image_dim_reduction = torch.nn.Linear(
+                in_features=image_feature_dim,
+                out_features=LOW_RANK_TENSOR_FUSION_REDUCTION_DIM
+            )
+            self.dialogue_dim_reduction = torch.nn.Linear(
+                in_features=dialogue_feature_dim,
+                out_features=LOW_RANK_TENSOR_FUSION_REDUCTION_DIM
+            )
+
+            # Then, we will embed the outer product
+            # outer_product_dim = text_feature_dim * image_feature_dim * dialogue_feature_dim
+            outer_product_dim = LOW_RANK_TENSOR_FUSION_REDUCTION_DIM * LOW_RANK_TENSOR_FUSION_REDUCTION_DIM * LOW_RANK_TENSOR_FUSION_REDUCTION_DIM
             self.fusion = torch.nn.Linear(
                 in_features=outer_product_dim,
                 out_features=fusion_output_size
@@ -83,6 +105,15 @@ class TextImageResnetDialogueSummarizationModel(nn.Module):
             fused = self.dropout(
                 torch.nn.functional.relu(self.fusion(combined)))
         elif self.fusion_method == "low-rank":
+            # Reduce dimensionality of uni-modal tensor representations
+            # This is necessary since computing the outer product of three
+            # tensors can result in a huge 3D tensor (e.g. for three tensors of
+            # dim 300, their outer product will have 27M cells) which will
+            # exceed available CUDA memory, even with lower batch sizes
+            text_features = torch.nn.functional.relu(self.text_dim_reduction(text_features))
+            image_features = torch.nn.functional.relu(self.image_dim_reduction(image_features))
+            dialogue_features = torch.nn.functional.relu(self.dialogue_dim_reduction(dialogue_features))
+
             # Compute outer product of uni-modal tensors and embed into `fusion_output_size` dimension
             # Note: We use PyTorch's Einstein summation notation processor to
             # compute the outer product

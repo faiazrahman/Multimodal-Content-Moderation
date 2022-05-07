@@ -94,7 +94,9 @@ if __name__ == "__main__":
         args.fusion_output_size = hparams_config.get("fusion_output_size", None)
         args.text_embedder = hparams_config.get("text_embedder", None)
         args.image_encoder = hparams_config.get("image_encoder", None)
+        if args.image_encoder == "dino": args.dino_model = hparams_config.get("dino_model", None)
         args.dialogue_summarization_model = hparams_config.get("dialogue_summarization_model", None)
+        args.fusion_method = hparams_config.get("fusion_method", None)
         args.test_data_path = hparams_config.get("test_data_path", None)
         args.preprocessed_test_dataframe_path = hparams_config.get("preprocessed_test_dataframe_path", None)
     else:
@@ -110,7 +112,9 @@ if __name__ == "__main__":
         args.fusion_output_size = config.get("fusion_output_size", 512)
         args.text_embedder = config.get("text_embedder", "all-mpnet-base-v2")
         args.image_encoder = config.get("image_encoder", "resnet")
+        if args.image_encoder == "dino": args.dino_model = config.get("dino_model", None)
         args.dialogue_summarization_model = config.get("dialogue_summarization_model", "bart-large-cnn")
+        args.fusion_method = config.get("fusion_method", "early-fusion")
 
         args.trained_model_version = config.get("trained_model_version", None)
         args.trained_model_path = config.get("trained_model_path", None)
@@ -130,7 +134,9 @@ if __name__ == "__main__":
     print(f"num_cpus: {args.num_cpus}")
     print(f"text_embedder: {args.text_embedder}")
     print(f"image_encoder: {args.image_encoder}")
+    if args.image_encoder == "dino": print(f"dino_model: {args.dino_model}")
     print(f"dialogue_summarization_model: {args.dialogue_summarization_model}")
+    print(f"fusion_method: {args.fusion_method}")
     print(f"test_data_path: {args.test_data_path}")
     print(f"preprocessed_test_dataframe_path: {args.preprocessed_test_dataframe_path}")
 
